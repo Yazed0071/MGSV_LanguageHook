@@ -33,6 +33,12 @@
     <ClInclude Include="Functions\UnkLoadUIDefaultDataFunc.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Functions\SetAnnounceText.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Functions\SetTextMissionTelopName.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">
@@ -48,6 +54,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Functions\UnkLoadUIDefaultDataFunc.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Functions\SetAnnounceText.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Functions\SetTextMissionTelopName.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

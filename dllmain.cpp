@@ -4,6 +4,8 @@
 #include "log.h"
 #include "FUN_145cc6360.h"
 #include <UnkLoadUIDefaultDataFunc.h>
+#include <SetAnnounceText.h>
+#include "SetTextMissionTelopName.h"
 
 // -----------------------------------------------
 //  DLL Entry Point
@@ -27,16 +29,16 @@ DWORD WINAPI InitThread(LPVOID)
         return 1;
     }
 
-    // Install both hooks
     if (!InstallLanguageHook(hGame))
         Log("[DllMain] Failed to install language hook.\n");
-    else
-        Log("[DllMain] installed InstallLanguageHook.\n");
 
     if (!Install_UnkLoadUIDefaultDataFunc_Hook())
-        Log("[DllMain] Failed to install language hook.\n");
-    else
-        Log("[DllMain] installed InstallLanguageHook.\n");
+        Log("[DllMain] Failed to install UnkLoadUIDefaultDataFunc hook.\n");
+
+    if (!Install_CountAnnounceSwap_Hook(hGame))
+        Log("[DllMain] Failed to install SetAnnounceText hook.\n");
+    if (!Install_EpisodeFormatSwap(hGame))
+        Log("[DllMain] Failed to install SetTextMissionTelopName hook.\n");
 
     Log("[DllMain] Hooks installed.\n");
     return 0;
