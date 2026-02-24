@@ -3,13 +3,15 @@
 #include "MinHook.h"
 #include "log.h"
 #include "FUN_145cc6360.h"
-#include <UnkLoadUIDefaultDataFunc.h>
-#include <SetAnnounceText.h>
+#include "UnkLoadUIDefaultDataFunc.h"
+#include "SetAnnounceText.h"
 #include "SetTextMissionTelopName.h"
+#include "GetFtexPathId.h"
+#include "ShowTextureLogo.h"
+#include "ReloadForLangChange.h"
 
-// -----------------------------------------------
-//  DLL Entry Point
-// -----------------------------------------------
+HMODULE realDInput8 = nullptr;
+
 DWORD WINAPI InitThread(LPVOID)
 {
     Sleep(1500);
@@ -37,8 +39,20 @@ DWORD WINAPI InitThread(LPVOID)
 
     if (!Install_CountAnnounceSwap_Hook(hGame))
         Log("[DllMain] Failed to install SetAnnounceText hook.\n");
+
+    if (!InstallGetFtexPathIdHook(hGame))
+        Log("[DllMain] Failed to install InstallGetFtexPathIdHook hook.\n");
+
+    if (!InstallShowTextureLogoHook(hGame))
+        Log("[DllMain] Failed to install InstallShowTextureLogoHook hook.\n");
+
     if (!Install_EpisodeFormatSwap(hGame))
-        Log("[DllMain] Failed to install SetTextMissionTelopName hook.\n");
+        Log("[DllMain] Failed to install Install_EpisodeFormatSwap hook.\n");
+
+    if (!Install_ReloadForLangChangeHook(hGame))
+		Log("[DllMain] Failed to install Install_ChangeLanguageHook hook.\n");
+
+
 
     Log("[DllMain] Hooks installed.\n");
     return 0;
