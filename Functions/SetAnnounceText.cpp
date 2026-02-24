@@ -20,6 +20,10 @@ static constexpr uintptr_t kImageBase = 0x140000000ULL;
 
 static uintptr_t gBase = 0;
 
+typedef bool(__cdecl* IsArabLanguage_t)();
+static IsArabLanguage_t IsArabLanguage = nullptr;
+static constexpr uintptr_t ABS_IsArabLanguage = 0x145F134E0ull;
+
 // -----------------------------
 // Helpers
 // -----------------------------
@@ -52,6 +56,14 @@ using VCall_708_t = void(__fastcall*)(void* self, uint64_t a, uint64_t b, void* 
 // Our replacement
 // -----------------------------
 static void __fastcall Hook_SetAnnounceText(void* thisPtr, uint32_t count) {
+    const bool isArabic = (IsArabLanguage && IsArabLanguage());
+
+    // (ADDED) If NOT Arabic, call original and return.
+    if (!isArabic) {
+        if (gOrig_SetAnnounceText) gOrig_SetAnnounceText(thisPtr, count);
+        return;
+    }
+
     // If anything looks off, fall back to original.
     if (!thisPtr || !gGetQuarkSystemTable || !gOrig_SetAnnounceText) {
         if (gOrig_SetAnnounceText) gOrig_SetAnnounceText(thisPtr, count);
@@ -159,6 +171,9 @@ bool Install_CountAnnounceSwap_Hook(HMODULE hGame) {
     if (!hGame) return false;
 
     gBase = (uintptr_t)hGame;
+
+    // (ADDED) Resolve IsArabLanguage absolute VA -> runtime VA
+    IsArabLanguage = (IsArabLanguage_t)(gBase + VA_to_RVA(ABS_IsArabLanguage));
 
     // Resolve fox::GetQuarkSystemTable from the callsite inside SetAnnounceText
     uintptr_t getQuarkCallsite = gBase + VA_to_RVA(kGetQuarkCallsite_VA);
