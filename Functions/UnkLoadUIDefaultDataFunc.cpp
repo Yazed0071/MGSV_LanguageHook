@@ -3,6 +3,7 @@
 #include <cstdint>
 #include "MinHook.h"
 #include "UnkLoadUIDefaultDataFunc.h"
+#include <log.h>
 
 // ----------------------------------------
 // Opaque engine structs (enough for our use)
@@ -56,13 +57,9 @@ using PathDtor_t = void(__fastcall*)(FoxPath* self);
 
 using UnkLoadUIDefaultDataFunc_t = void(__fastcall*)(void* p1, void* p2, void* p3);
 
-// ----------------------------------------
-// Addresses (ABS from your dump)
-// ----------------------------------------
 static constexpr uintptr_t ABS_IsArabLanguage = 0x145F134E0ull;
 static constexpr uintptr_t ABS_UnkLoadFunc = 0x145F86420ull;
 
-// TODO: Replace these placeholders with your real addresses
 static constexpr uintptr_t ABS_FoxStringCtor = 0x1400163F0ull;
 static constexpr uintptr_t ABS_StdFree = 0x140004200ull;
 static constexpr uintptr_t ABS_PathCInit = 0x140085780ull;
@@ -70,9 +67,6 @@ static constexpr uintptr_t ABS_PathAssign = 0x140085650ull;
 static constexpr uintptr_t ABS_PathDtor = 0x140085610ull;
 static constexpr uintptr_t ABS_LoadPageBlock = 0x140928D10ull;
 
-// ----------------------------------------
-// Resolved pointers
-// ----------------------------------------
 static FoxStringCtor_t       FoxStringCtor = nullptr;
 static StdFree_t             StdFree = nullptr;
 static PathCInitWithString_t PathCInitWithString = nullptr;
@@ -82,22 +76,22 @@ static LoadPageBlock_t       LoadPageBlock = nullptr;
 
 static UnkLoadUIDefaultDataFunc_t g_Orig = nullptr;
 
-// If destructor on param_3 causes issues, set to 0
 #ifndef DESTROY_PARAM3
 #define DESTROY_PARAM3 1
 #endif
 
-// ----------------------------------------
-// Hook implementation
-// ----------------------------------------
 static void __fastcall hkUnkLoadUIDefaultDataFunc(void* param_1, void* param_2, void* param_3)
 {
     const bool isArabic = (IsArabLanguage && IsArabLanguage());
 
-    // Change this to your actual Arabic pack if different
-    const char* path = isArabic
-        ? "/Assets/tpp/pack/ui/ui_default_data2_ar.fpk"
-        : "/Assets/tpp/pack/ui/ui_default_data2.fpk";
+    const char* path ="/Assets/tpp/pack/ui/ui_default_data2_ar.fpk";
+    if (!isArabic) 
+    {
+        Log("[UnkLoadUIDefaultDataFunc] Loading /Assets/tpp/pack/ui/ui_default_data2.fpk\n");
+        path = "/Assets/tpp/pack/ui/ui_default_data2.fpk";
+    }
+    else
+		Log("[UnkLoadUIDefaultDataFunc] Loading /Assets/tpp/pack/ui/ui_default_data2_ar.fpk\n");
 
     FoxString s{};
     FoxStringCtor(&s, path);
@@ -108,7 +102,6 @@ static void __fastcall hkUnkLoadUIDefaultDataFunc(void* param_1, void* param_2, 
     if (s.Capacity > 0xF && s.Data.heapPtr)
         StdFree(s.Data.heapPtr, 0);
 
-    // mirror reset (optional)
     s.Capacity = 0xF;
     s.Length = 0;
     s.Data.sso[0] = '\0';
@@ -126,16 +119,12 @@ static void __fastcall hkUnkLoadUIDefaultDataFunc(void* param_1, void* param_2, 
     #endif
 }
 
-// ----------------------------------------
-// Install hook
-// ----------------------------------------
 bool Install_UnkLoadUIDefaultDataFunc_Hook()
 {
     const uintptr_t base = GetExeBase();
     if (!base)
         return false;
 
-    // Resolve
     IsArabLanguage = reinterpret_cast<IsArabLanguage_t>(base + ToRva(ABS_IsArabLanguage));
     FoxStringCtor = reinterpret_cast<FoxStringCtor_t>(base + ToRva(ABS_FoxStringCtor));
     StdFree = reinterpret_cast<StdFree_t>(base + ToRva(ABS_StdFree));
@@ -146,17 +135,14 @@ bool Install_UnkLoadUIDefaultDataFunc_Hook()
 
     void* target = reinterpret_cast<void*>(base + ToRva(ABS_UnkLoadFunc));
 
-    // IMPORTANT: tolerate "already initialized" because dllmain.cpp calls MH_Initialize()
     const MH_STATUS initSt = MH_Initialize();
     if (initSt != MH_OK && initSt != MH_ERROR_ALREADY_INITIALIZED)
         return false;
 
-    // Create hook (tolerate already created)
     MH_STATUS st = MH_CreateHook(target, &hkUnkLoadUIDefaultDataFunc, reinterpret_cast<void**>(&g_Orig));
     if (st != MH_OK && st != MH_ERROR_ALREADY_CREATED)
         return false;
 
-    // Enable hook (tolerate already enabled)
     st = MH_EnableHook(target);
     if (st != MH_OK && st != MH_ERROR_ENABLED)
         return false;
