@@ -39,6 +39,15 @@
     <ClInclude Include="Functions\SetTextMissionTelopName.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Functions\GetFtexPathId.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Functions\ShowTextureLogo.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Functions\ReloadForLangChange.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">
@@ -60,6 +69,15 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Functions\SetTextMissionTelopName.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Functions\GetFtexPathId.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Functions\ShowTextureLogo.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Functions\ReloadForLangChange.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
