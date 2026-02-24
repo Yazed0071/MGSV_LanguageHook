@@ -13,6 +13,20 @@ static constexpr uintptr_t IMAGE_BASE = 0x140000000ULL;
 static constexpr uintptr_t CALLSITE_VA = 0x145D05D19ULL; // <- your screenshot: CALL fox::snprintf
 static constexpr uintptr_t REL32_RANGE = 0x70000000ULL;  // ~1.75GB safety window
 
+// -------------------------
+// Arabic checker (ADDED)
+// -------------------------
+typedef bool(__cdecl* IsArabLanguage_t)();
+static IsArabLanguage_t IsArabLanguage = nullptr;
+static constexpr uintptr_t ABS_IsArabLanguage = 0x145F134E0ull;
+
+static __forceinline bool IsArabicSafe()
+{
+    if (!IsArabLanguage) return false;
+    __try { return IsArabLanguage(); }
+    __except (EXCEPTION_EXECUTE_HANDLER) { return false; }
+}
+
 static uintptr_t gGameBase = 0;
 static uintptr_t gCallSite = 0;
 static uintptr_t gOrigTarget = 0;
@@ -93,8 +107,14 @@ static void* AllocNear(uintptr_t nearTo, size_t size) {
 
 // Thunk is called by the patched CALL. It jumps to our wrapper using absolute jump.
 // CALL pushes return address -> wrapper returns straight back to game.
-static int __cdecl EpisodeSnprintf_Wrapper(char* dst, size_t dstSize, const char* /*fmt*/, const char* episodeText, int episodeNum) {
+static int __cdecl EpisodeSnprintf_Wrapper(char* dst, size_t dstSize, const char* fmt, const char* episodeText, int episodeNum) {
     if (!gFoxSnprintf) return 0;
+
+    // (ADDED) If NOT Arabic: call original exactly as the game intended.
+    if (!IsArabicSafe()) {
+        return gFoxSnprintf(dst, dstSize, fmt, episodeText, episodeNum);
+    }
+
     // Swap: "%d %s" -> episodeNum then episodeText
     return gFoxSnprintf(dst, dstSize, kFmt_D_S, episodeNum, episodeText);
 }
@@ -111,11 +131,17 @@ static bool PatchCallToThunk(uintptr_t callSite, uintptr_t thunkAddr) {
     return WriteMemory((void*)callSite, patch, sizeof(patch));
 }
 
+
 bool Install_EpisodeFormatSwap(HMODULE hGame) {
+
     if (!hGame) return false;
     if (gThunkMem) return true; // already installed
 
     gGameBase = (uintptr_t)hGame;
+
+    // (ADDED) Resolve Arabic checker once (absolute VA -> runtime VA)
+    IsArabLanguage = (IsArabLanguage_t)(gGameBase + (ABS_IsArabLanguage - IMAGE_BASE));
+
     gCallSite = gGameBase + VA_to_RVA(CALLSITE_VA);
 
     // Validate original instruction is CALL rel32
