@@ -1,8 +1,7 @@
-#include "pch.h"
+
 #include <Windows.h>
 #include <cstdint>
 #include "MinHook.h"
-#include "UnkLoadUIDefaultDataFunc.h"
 #include <log.h>
 
 // ----------------------------------------
@@ -84,14 +83,14 @@ static void __fastcall hkUnkLoadUIDefaultDataFunc(void* param_1, void* param_2, 
 {
     const bool isArabic = (IsArabLanguage && IsArabLanguage());
 
-    const char* path ="/Assets/tpp/pack/ui/ui_default_data2_ar.fpk";
-    if (!isArabic) 
+    const char* path = "/Assets/tpp/pack/ui/ui_default_data2_ar.fpk";
+    if (!isArabic)
     {
         Log("[UnkLoadUIDefaultDataFunc] Loading /Assets/tpp/pack/ui/ui_default_data2.fpk\n");
         path = "/Assets/tpp/pack/ui/ui_default_data2.fpk";
     }
     else
-		Log("[UnkLoadUIDefaultDataFunc] Loading /Assets/tpp/pack/ui/ui_default_data2_ar.fpk\n");
+        Log("[UnkLoadUIDefaultDataFunc] Loading /Assets/tpp/pack/ui/ui_default_data2_ar.fpk\n");
 
     FoxString s{};
     FoxStringCtor(&s, path);

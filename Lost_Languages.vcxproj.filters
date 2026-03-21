@@ -21,31 +21,28 @@
     <ClInclude Include="pch.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\MinHook.h">
+    <ClInclude Include="include\FoxHashes.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\lauxlib.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\log.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Functions\FUN_145cc6360.h">
+    <ClInclude Include="include\lua.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Functions\UnkLoadUIDefaultDataFunc.h">
+    <ClInclude Include="include\luaconf.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Functions\SetAnnounceText.h">
+    <ClInclude Include="include\lualib.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Functions\SetTextMissionTelopName.h">
+    <ClInclude Include="include\MinHook.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Functions\GetFtexPathId.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Functions\ShowTextureLogo.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Functions\ReloadForLangChange.h">
+    <ClInclude Include="include\HookUtils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -56,28 +53,43 @@
     <ClCompile Include="pch.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Functions\FUN_145cc6360.cpp">
+    <ClCompile Include="include\FoxHashes.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="include\log.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Functions\UnkLoadUIDefaultDataFunc.cpp">
+    <ClCompile Include="src\tpp\ui\hud\impl\TppUILangSelectPopupImpl\TppUILangSelectPopupImpl.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Functions\SetAnnounceText.cpp">
+    <ClCompile Include="src\tpp\ui\hud\impl\TppUILangSelectPopupImpl\FixKorCh.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Functions\SetTextMissionTelopName.cpp">
+    <ClCompile Include="src\tpp\ui\hud\impl\TppUILangSelectPopupImpl\FUN_145cc6360.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Functions\GetFtexPathId.cpp">
+    <ClCompile Include="src\tpp\ui\UiCommand\ShowTextureLogo.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Functions\ShowTextureLogo.cpp">
+    <ClCompile Include="src\tpp\ui\hud\ChapterTelopInfo\GetFtexPathId.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Functions\ReloadForLangChange.cpp">
+    <ClCompile Include="src\tpp\ui\UiCommand\ShowChapterTelop.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\tpp\ui\lang\UnkLoadUIDefaultDataFunc.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\tpp\ui\lang\UnkLoadTppPartsLangFpk.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\tpp\ui\menu\impl\MotherBaseDevicePauseHelpTableImpl\GetPauseHelpLangBlockPath.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\tpp\ui\menu\impl\MenuSystemImpl\GetTipsLangBlockPath.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="SetLuaFunctions.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

@@ -1,6 +1,5 @@
-#include "pch.h"
 
-#include "FUN_145cc6360.h"
+
 #include "log.h"
 #include "MinHook.h"
 #include <windows.h>
@@ -19,6 +18,8 @@ struct LanguageEntry {
 
 static std::vector<LanguageEntry> g_LanguagesToAdd = {
     { 6,  0x00FB22736BF48BULL, "Arabic" },  // Arabic language entry
+    { 9,  0x007FF8A9A9E6A7ULL, "Chinese" }, // 0x00BBC1DCE60188ULL == option_lan_ch
+    { 10, 0x00A886C2115A2DULL, "Korean" },  // 0x003ED6888202BFULL == option_lan_ko
 };
 
 // -------------------- Globals --------------------
