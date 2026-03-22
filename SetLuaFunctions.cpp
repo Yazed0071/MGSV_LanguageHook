@@ -6,6 +6,7 @@
 #include "HookUtils.h"
 #include "log.h"
 #include "FoxHashes.h"
+#include "AddressSet.h"
 
 extern "C" {
     #include "lua.h"
@@ -21,30 +22,6 @@ namespace
     using lua_tointeger_t = long long(__fastcall*)(lua_State* L, int idx);
     using lua_tonumber_t = lua_Number(__fastcall*)(lua_State* L, int idx);
     using lua_pushnumber_t = void(__fastcall*)(lua_State* L, lua_Number n);
-
-    // Absolute address of tpp::ui::UiCommand::SetLuaFunctions.
-    // Params: L (lua_State*)
-    static constexpr uintptr_t ABS_SetLuaFunctions = 0x1408D78A0ull;
-
-    // Absolute address of fox::LuaRegisterLibrary.
-    // Params: L (lua_State*), libName (const char*), funcs (luaL_Reg*)
-    static constexpr uintptr_t ABS_FoxLuaRegisterLibrary = 0x14006B6D0ull;
-
-    // Absolute address of the game's lua_tolstring thunk.
-    // Params: L (lua_State*), idx (int), len (size_t*)
-    static constexpr uintptr_t ABS_lua_tolstring = 0x141A123C0ull;
-
-    // Absolute address of the game's lua_tointeger thunk.
-    // Params: L (lua_State*), idx (int)
-    static constexpr uintptr_t ABS_lua_tointeger = 0x141A12390ull;
-
-    // Absolute address of the game's lua_tonumber thunk.
-// Params: L (lua_State*), idx (int)
-    static constexpr uintptr_t ABS_lua_tonumber = 0x141A12460ull;
-
-    // Absolute address of the game's lua_pushnumber thunk.
-    // Params: L (lua_State*), n (lua_Number)
-    static constexpr uintptr_t ABS_lua_pushnumber = 0x141A11BC0ull;
 
     static SetLuaFunctions_t       g_OrigSetLuaFunctions = nullptr;
     static FoxLuaRegisterLibrary_t g_FoxLuaRegisterLibrary = nullptr;
@@ -62,31 +39,31 @@ static bool ResolveLuaApi()
     if (!g_FoxLuaRegisterLibrary)
     {
         g_FoxLuaRegisterLibrary = reinterpret_cast<FoxLuaRegisterLibrary_t>(
-            ResolveGameAddress(ABS_FoxLuaRegisterLibrary));
+            ResolveGameAddress(gAddr.FoxLuaRegisterLibrary));
     }
 
     if (!g_lua_tolstring)
     {
         g_lua_tolstring = reinterpret_cast<lua_tolstring_t>(
-            ResolveGameAddress(ABS_lua_tolstring));
+            ResolveGameAddress(gAddr.lua_tolstring));
     }
 
     if (!g_lua_tointeger)
     {
         g_lua_tointeger = reinterpret_cast<lua_tointeger_t>(
-            ResolveGameAddress(ABS_lua_tointeger));
+            ResolveGameAddress(gAddr.lua_tointeger));
     }
 
     if (!g_lua_tonumber)
     {
         g_lua_tonumber = reinterpret_cast<lua_tonumber_t>(
-            ResolveGameAddress(ABS_lua_tonumber));
+            ResolveGameAddress(gAddr.lua_tonumber));
     }
 
     if (!g_lua_pushnumber)
     {
         g_lua_pushnumber = reinterpret_cast<lua_pushnumber_t>(
-            ResolveGameAddress(ABS_lua_pushnumber));
+            ResolveGameAddress(gAddr.lua_pushnumber));
     }
 
     return g_FoxLuaRegisterLibrary &&
@@ -183,7 +160,7 @@ bool Install_SetLuaFunctions_Hook()
 {
     ResolveLuaApi();
 
-    void* target = ResolveGameAddress(ABS_SetLuaFunctions);
+    void* target = ResolveGameAddress(gAddr.SetLuaFunctions);
     if (!target)
         return false;
 
@@ -199,7 +176,7 @@ bool Install_SetLuaFunctions_Hook()
 // Removes the SetLuaFunctions hook.
 bool Uninstall_SetLuaFunctions_Hook()
 {
-    DisableAndRemoveHook(ResolveGameAddress(ABS_SetLuaFunctions));
+    DisableAndRemoveHook(ResolveGameAddress(gAddr.SetLuaFunctions));
     g_OrigSetLuaFunctions = nullptr;
     g_RegisteredLuaStates.clear();
     return true;

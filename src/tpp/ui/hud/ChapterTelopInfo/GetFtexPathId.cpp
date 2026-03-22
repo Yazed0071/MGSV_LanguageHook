@@ -20,6 +20,7 @@
 #include <cstdint>
 #include "MinHook.h"
 #include "log.h"
+#include "AddressSet.h"
 
 // ------------------------------------------------------------
 // External helpers
@@ -31,10 +32,6 @@
 using IsArabLanguage_t = bool(__cdecl*)();
 static IsArabLanguage_t gIsArabLanguage = nullptr;
 
-// From your working example.
-// Params:
-// - none
-static constexpr uintptr_t ABS_IsArabLanguage = 0x145F134E0ull;
 
 // ------------------------------------------------------------
 // Address constants
@@ -45,10 +42,6 @@ static constexpr uintptr_t ABS_IsArabLanguage = 0x145F134E0ull;
 // - none
 static constexpr uintptr_t IDA_IMAGE_BASE = 0x140000000ull;
 
-// Function: target to hook.
-// Params:
-// - none
-static constexpr uintptr_t ABS_ChapterTelopInfo_GetFtexPathId = 0x1408D05F0ull;
 
 // ------------------------------------------------------------
 // Arabic chapter texture ids
@@ -237,10 +230,10 @@ bool InstallChapterTelopArabicFtexHook(HMODULE hGame)
         return false;
 
     gIsArabLanguage =
-        reinterpret_cast<IsArabLanguage_t>(ToRuntimeVA(hGame, ABS_IsArabLanguage));
+        reinterpret_cast<IsArabLanguage_t>(ToRuntimeVA(hGame, gAddr.IsArabLanguage));
 
     gTargetGetFtexPathId =
-        reinterpret_cast<void*>(ToRuntimeVA(hGame, ABS_ChapterTelopInfo_GetFtexPathId));
+        reinterpret_cast<void*>(ToRuntimeVA(hGame, gAddr.GetFtexPathId));
 
     if (!gTargetGetFtexPathId)
     {

@@ -3,6 +3,7 @@
 #include <windows.h>
 #include <cstdint>
 #include "MinHook.h"
+#include "AddressSet.h"
 #include "log.h"
 
 // ------------------------------------------------------------
@@ -19,11 +20,6 @@ static IsArabLanguage_t IsArabLanguage = nullptr;
 // ABS_* values are absolute VAs from your dump.
 // ------------------------------------------------------------
 static constexpr uintptr_t IDA_IMAGE_BASE = 0x140000000ull;
-static constexpr uintptr_t ABS_IsArabLanguage = 0x145F134E0ull;
-
-// tpp::ui::menu::impl::MotherBaseDevicePauseHelpTableImpl::GetPauseHelpLangBlockPath
-static constexpr uintptr_t ABS_GetPauseHelpLangBlockPath = 0x145DDE150ull;
-
 // ------------------------------------------------------------
 // Arabic PathIds you provided
 // param_2 == 0 -> /Assets/tpp/pack/ui/lang/lang_tpp_mbhelp_....fpk
@@ -123,8 +119,8 @@ bool InstallGetPauseHelpLangBlockPathHook(HMODULE hGame)
     if (!hGame)
         return false;
 
-    IsArabLanguage = reinterpret_cast<IsArabLanguage_t>(ToRuntimeVA(hGame, ABS_IsArabLanguage));
-    gTarget = reinterpret_cast<void*>(ToRuntimeVA(hGame, ABS_GetPauseHelpLangBlockPath));
+    IsArabLanguage = reinterpret_cast<IsArabLanguage_t>(ToRuntimeVA(hGame, gAddr.IsArabLanguage));
+    gTarget = reinterpret_cast<void*>(ToRuntimeVA(hGame, gAddr.GetPauseHelpLangBlockPath));
 
     if (!gTarget)
         return false;

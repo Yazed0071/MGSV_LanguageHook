@@ -143,6 +143,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="AddressSet.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="include\FoxHashes.h" />
     <ClInclude Include="include\HookUtils.h" />
@@ -155,6 +156,7 @@
     <ClInclude Include="pch.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="AddressSet.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="include\FoxHashes.cpp" />
     <ClCompile Include="include\log.cpp" />

@@ -4,7 +4,7 @@
 #include <cstdint>
 #include "MinHook.h"
 #include "log.h"
-
+#include "AddressSet.h"
 // ------------------------------------------------------------
 // Arabic language checker
 // ------------------------------------------------------------
@@ -13,10 +13,6 @@ typedef bool(__cdecl* IsArabLanguage_t)();
 static IsArabLanguage_t IsArabLanguage = nullptr;
 
 static constexpr uintptr_t IDA_IMAGE_BASE = 0x140000000ull;
-static constexpr uintptr_t ABS_IsArabLanguage = 0x145F134E0ull;
-
-// tpp::ui::menu::impl::MenuSystemImpl::GetTipsLangBlockPath
-static constexpr uintptr_t ABS_GetTipsLangBlockPath = 0x146089BD0ull;
 
 // Your Arabic PathId
 static constexpr uint64_t ARABIC_TIPS_LANG_BLOCK_PATH_ID = 0x5228b8f2da5ea9aeull;
@@ -86,8 +82,8 @@ bool InstallGetTipsLangBlockPathHook(HMODULE hGame)
     if (!hGame)
         return false;
 
-    IsArabLanguage = reinterpret_cast<IsArabLanguage_t>(ToRuntimeVA(hGame, ABS_IsArabLanguage));
-    gTarget = reinterpret_cast<void*>(ToRuntimeVA(hGame, ABS_GetTipsLangBlockPath));
+    IsArabLanguage = reinterpret_cast<IsArabLanguage_t>(ToRuntimeVA(hGame, gAddr.IsArabLanguage));
+    gTarget = reinterpret_cast<void*>(ToRuntimeVA(hGame, gAddr.GetTipsLangBlockPath));
 
     if (!gTarget)
         return false;

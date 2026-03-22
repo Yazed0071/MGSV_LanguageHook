@@ -15,6 +15,7 @@
 #include <cstdint>
 #include "MinHook.h"
 #include "log.h"
+#include "AddressSet.h"
 
 // ------------------------------------------------------------
 // Minimal Lua forward declarations
@@ -39,23 +40,7 @@ using lua_Number = double;
 // - none
 static constexpr uintptr_t IDA_IMAGE_BASE = 0x140000000ull;
 
-// Function addresses used by this hook.
-// Params:
-// - none
-static constexpr uintptr_t ABS_ShowTextureLogo = 0x1408DFFB0ull;
-static constexpr uintptr_t ABS_CommonDataManager_GetInstance = 0x140865D00ull;
-static constexpr uintptr_t ABS_CommonDataManager_SetDispLogo = 0x140867330ull;
-static constexpr uintptr_t ABS_GetStringId = 0x1409137A0ull;
-static constexpr uintptr_t ABS_LuaCheckGlueString = 0x1400F1D50ull;
-static constexpr uintptr_t ABS_LuaToGlueString = 0x1400F21D0ull;
-static constexpr uintptr_t ABS_lua_isstring = 0x141A116B0ull;
-static constexpr uintptr_t ABS_lua_isnumber = 0x141A11680ull;
-static constexpr uintptr_t ABS_lua_tonumber = 0x141A12460ull;
-static constexpr uintptr_t ABS_IsArabLanguage = 0x145F134E0ull;
 
-// Special key/hash constants used by ShowTextureLogo.
-// Params:
-// - none
 static constexpr uint64_t SPECIAL_LOGO_KEY_ID_48 = 0x11DDD3046B4Cull;
 static constexpr uint64_t ARABIC_LOGO_TEXTURE_ID = 0x1568189A5584EE66ull;
 static constexpr uint32_t SPECIAL_STYLE_ID = 0x887C9A23u;
@@ -414,17 +399,17 @@ bool InstallShowTextureLogoArabicHook(HMODULE hGame)
     if (!hGame)
         return false;
 
-    gIsArabLanguage = reinterpret_cast<IsArabLanguage_t>(ToRuntimeVA(hGame, ABS_IsArabLanguage));
-    gCommonDataManagerGetInstance = reinterpret_cast<CommonDataManager_GetInstance_t>(ToRuntimeVA(hGame, ABS_CommonDataManager_GetInstance));
-    gSetDispTextureLogo = reinterpret_cast<CommonDataManager_SetDispLogo_t>(ToRuntimeVA(hGame, ABS_CommonDataManager_SetDispLogo));
-    gGetStringId = reinterpret_cast<GetStringId_t>(ToRuntimeVA(hGame, ABS_GetStringId));
-    gLuaCheckGlueString = reinterpret_cast<LuaCheckGlueString_t>(ToRuntimeVA(hGame, ABS_LuaCheckGlueString));
-    gLuaToGlueString = reinterpret_cast<LuaToGlueString_t>(ToRuntimeVA(hGame, ABS_LuaToGlueString));
-    gLuaIsString = reinterpret_cast<lua_isstring_t>(ToRuntimeVA(hGame, ABS_lua_isstring));
-    gLuaIsNumber = reinterpret_cast<lua_isnumber_t>(ToRuntimeVA(hGame, ABS_lua_isnumber));
-    gLuaToNumber = reinterpret_cast<lua_tonumber_t>(ToRuntimeVA(hGame, ABS_lua_tonumber));
+    gIsArabLanguage = reinterpret_cast<IsArabLanguage_t>(ToRuntimeVA(hGame, gAddr.IsArabLanguage));
+    gCommonDataManagerGetInstance = reinterpret_cast<CommonDataManager_GetInstance_t>(ToRuntimeVA(hGame, gAddr.CommonDataManager_GetInstance));
+    gSetDispTextureLogo = reinterpret_cast<CommonDataManager_SetDispLogo_t>(ToRuntimeVA(hGame, gAddr.CommonDataManager_SetDispLogo));
+    gGetStringId = reinterpret_cast<GetStringId_t>(ToRuntimeVA(hGame, gAddr.GetStringId));
+    gLuaCheckGlueString = reinterpret_cast<LuaCheckGlueString_t>(ToRuntimeVA(hGame, gAddr.LuaCheckGlueString));
+    gLuaToGlueString = reinterpret_cast<LuaToGlueString_t>(ToRuntimeVA(hGame, gAddr.LuaToGlueString));
+    gLuaIsString = reinterpret_cast<lua_isstring_t>(ToRuntimeVA(hGame, gAddr.lua_isstring));
+    gLuaIsNumber = reinterpret_cast<lua_isnumber_t>(ToRuntimeVA(hGame, gAddr.lua_isnumber));
+    gLuaToNumber = reinterpret_cast<lua_tonumber_t>(ToRuntimeVA(hGame, gAddr.lua_tonumber));
 
-    gTargetShowTextureLogo = ToRuntimeVA(hGame, ABS_ShowTextureLogo);
+    gTargetShowTextureLogo = ToRuntimeVA(hGame, gAddr.ShowTextureLogo);
     if (!gTargetShowTextureLogo)
         return false;
 

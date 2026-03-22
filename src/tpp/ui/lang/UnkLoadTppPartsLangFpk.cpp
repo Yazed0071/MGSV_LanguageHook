@@ -19,6 +19,7 @@
 #include <cstdint>
 #include "MinHook.h"
 #include "log.h"
+#include <AddressSet.h>
 
 // ------------------------------------------------------------
 // Address constants
@@ -29,25 +30,7 @@
 // - none
 static constexpr uintptr_t IDA_IMAGE_BASE = 0x140000000ull;
 
-// Function: target to hook.
-// Params:
-// - none
-static constexpr uintptr_t ABS_UnkLoadTppPartsLangFpk = 0x14095CA10ull;
 
-// Function: helper used by the original routine.
-// Resolved from the call inside UnkLoadTppPartsLangFpk.
-// Params:
-// - none
-static constexpr uintptr_t ABS_GetUiUtility = 0x140939A20ull;
-
-// Function: Arabic-language helper from your working pattern.
-// Params:
-// - none
-static constexpr uintptr_t ABS_IsArabLanguage = 0x145F134E0ull;
-
-// Function: missing Arabic parts pack hash.
-// Params:
-// - none
 static constexpr uint64_t HASH_LANG_TPP_PARTS_ARA_FPK = 0x522A3CC63BE9B275ull;
 
 // ------------------------------------------------------------
@@ -271,13 +254,13 @@ bool InstallUnkLoadTppPartsLangFpkArabicFixHook(HMODULE hGame)
         return false;
 
     gIsArabLanguage =
-        reinterpret_cast<IsArabLanguage_t>(ToRuntimeVA(hGame, ABS_IsArabLanguage));
+        reinterpret_cast<IsArabLanguage_t>(ToRuntimeVA(hGame, gAddr.IsArabLanguage));
 
     gGetUiUtility =
-        reinterpret_cast<GetUiUtility_t>(ToRuntimeVA(hGame, ABS_GetUiUtility));
+        reinterpret_cast<GetUiUtility_t>(ToRuntimeVA(hGame, gAddr.GetUiUtility));
 
     gTargetUnkLoadTppPartsLangFpk =
-        reinterpret_cast<void*>(ToRuntimeVA(hGame, ABS_UnkLoadTppPartsLangFpk));
+        reinterpret_cast<void*>(ToRuntimeVA(hGame, gAddr.UnkLoadTppPartsLangFpk));
 
     if (!gTargetUnkLoadTppPartsLangFpk)
     {

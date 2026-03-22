@@ -5,8 +5,9 @@
 
 #include "MinHook.h"
 #include "log.h"
+#include "AddressSet.h"
 
-bool Install_SetLuaFunctions_Hook();
+
 bool InstallGameLangStateKeepCJKHook(HMODULE hGame);
 bool InstallLangSelectPopupPagedRewriteHooks(HMODULE hGame);
 bool InstallLanguageHook(HMODULE hGame);
@@ -16,9 +17,9 @@ bool Install_UnkLoadUIDefaultDataFunc_Hook();
 bool InstallUnkLoadTppPartsLangFpkArabicFixHook(HMODULE hGame);
 bool InstallGetTipsLangBlockPathHook(HMODULE hGame);
 bool InstallGetPauseHelpLangBlockPathHook(HMODULE hGame);
+bool InstallUiLangInitExtraLoadFuncsHook(HMODULE hGame);
+bool Install_SetLuaFunctions_Hook();
 
-
-bool Uninstall_SetLuaFunctions_Hook();
 void RemoveGameLangStateKeepCJKHook();
 void RemoveLangSelectPopupPagedRewriteHooks();
 void RemoveLanguageHook();
@@ -27,15 +28,82 @@ void RemoveChapterTelopArabicFtexHook();
 void RemoveUnkLoadTppPartsLangFpkArabicFixHook();
 void RemoveGetTipsLangBlockPathHook();
 void RemoveGetPauseHelpLangBlockPathHook();
+void RemoveUiLangInitExtraLoadFuncsHook();
+bool Uninstall_SetLuaFunctions_Hook();
 
 
 namespace
 {
     static std::atomic_bool gStarted{ false };
     static std::atomic_bool gConsoleReady{ false };
+
+    static HMODULE gRealDinput8 = nullptr;
+
+    // Function: pointer type for the real system DirectInput8Create.
+    // Params:
+    // - hinst: module instance
+    // - dwVersion: DirectInput version
+    // - riidltf: requested interface id
+    // - ppvOut: returned interface pointer
+    // - punkOuter: outer unknown for aggregation
+    using DirectInput8Create_t =
+        HRESULT(WINAPI*)(HINSTANCE, DWORD, REFIID, LPVOID*, LPVOID);
+
+    static DirectInput8Create_t gRealDirectInput8Create = nullptr;
 }
 
-// Creates or attaches a console for debug logging.
+// Function: loads the real system dinput8.dll and resolves DirectInput8Create.
+// Params:
+// - none
+static void LoadRealDinput8()
+{
+    if (gRealDinput8)
+        return;
+
+    wchar_t sysPath[MAX_PATH]{};
+    GetSystemDirectoryW(sysPath, MAX_PATH);
+    wcscat_s(sysPath, L"\\dinput8.dll");
+
+    gRealDinput8 = LoadLibraryW(sysPath);
+    if (!gRealDinput8)
+        return;
+
+    gRealDirectInput8Create =
+        reinterpret_cast<DirectInput8Create_t>(
+            GetProcAddress(gRealDinput8, "DirectInput8Create"));
+}
+
+// Function: exported proxy for DirectInput8Create so the game can still call the real one.
+// Params:
+// - hinst: module instance
+// - dwVersion: DirectInput version
+// - riidltf: requested interface id
+// - ppvOut: returned interface pointer
+// - punkOuter: outer unknown for aggregation
+extern "C" __declspec(dllexport)
+HRESULT WINAPI DirectInput8Create(
+    HINSTANCE hinst,
+    DWORD dwVersion,
+    REFIID riidltf,
+    LPVOID* ppvOut,
+    LPVOID punkOuter)
+{
+    LoadRealDinput8();
+
+    if (!gRealDirectInput8Create)
+        return E_FAIL;
+
+    return gRealDirectInput8Create(
+        hinst,
+        dwVersion,
+        riidltf,
+        ppvOut,
+        punkOuter);
+}
+
+// Function: creates or attaches a console for debug logging.
+// Params:
+// - none
 static void SetupConsole()
 {
     if (gConsoleReady.load())
@@ -56,86 +124,108 @@ static void SetupConsole()
     fflush(stdout);
 }
 
-// Initializes MinHook and all runtime hooks on a worker thread.
+// Function: initializes MinHook and installs all runtime hooks on a worker thread.
+// Params:
+// - unused: unused thread parameter
+// Returns:
+// - thread exit code
 static DWORD WINAPI InitThread(LPVOID)
 {
     #ifdef _DEBUG
     SetupConsole();
-    #endif // DEBUG
+    #endif
 
     HMODULE hGame = GetModuleHandleA("mgsvtpp.exe");
     if (!hGame)
-        hGame = GetModuleHandle(NULL);
+        hGame = GetModuleHandleW(nullptr);
 
+    if (!hGame)
+    {
+        Log("[DLL] Failed to get game module.\n");
+        return 0;
+    }
 
-    Log("[DLL] InitThread started.\n");
+    if (!ResolveAddressSet(hGame))
+    {
+        Log("[DLL] ResolveAddressSet failed.\n");
+        return 0;
+    }
+
+    Log("[DLL] InitThread started. build=%s\n", GetGameBuildName(gGameBuild));
 
     const MH_STATUS st = MH_Initialize();
     Log("[DLL] MH_Initialize -> %d\n", static_cast<int>(st));
     if (st != MH_OK && st != MH_ERROR_ALREADY_INITIALIZED)
         return 0;
 
-	if (!Install_SetLuaFunctions_Hook())
-		Log("[DLL] Failed to install SetLuaFunctions hook.\n");
 
-	if (!InstallGameLangStateKeepCJKHook(hGame))
-		Log("[DLL] Failed to install GameLangStateKeepCJK hook.\n");
-	if (!InstallLangSelectPopupPagedRewriteHooks(hGame))
-		Log("[DLL] Failed to install LangSelectPopupPagedDynamic hooks.\n");
+    if (!Install_SetLuaFunctions_Hook())
+        Log("[DLL] Failed to install Install_SetLuaFunctions_Hook hook.\n");
 
-	if (!InstallLanguageHook(hGame))
-		Log("[DLL] Failed to install LanguageHook.\n");
+    if (!InstallGameLangStateKeepCJKHook(hGame))
+        Log("[DLL] Failed to install GameLangStateKeepCJK hook.\n");
 
-	if (!InstallShowTextureLogoArabicHook(hGame))
-		Log("[DLL] Failed to install ShowTextureLogo Arabic hook.\n");
+    if (!InstallLangSelectPopupPagedRewriteHooks(hGame))
+        Log("[DLL] Failed to install LangSelectPopupPagedDynamic hooks.\n");
 
-	if (!InstallChapterTelopArabicFtexHook(hGame))
-		Log("[DLL] Failed to install ChapterTelopInfo::GetFtexPathId Arabic hook.\n");
+    if (!InstallLanguageHook(hGame))
+        Log("[DLL] Failed to install LanguageHook.\n");
 
-	if (!Install_UnkLoadUIDefaultDataFunc_Hook())
-		Log("[DLL] Failed to install UnkLoadUIDefaultDataFunc hook.\n");
+    if (!InstallShowTextureLogoArabicHook(hGame))
+        Log("[DLL] Failed to install ShowTextureLogo Arabic hook.\n");
 
-	if (!InstallUnkLoadTppPartsLangFpkArabicFixHook(hGame))
-		Log("[DLL] Failed to install UnkLoadTppPartsLangFpk Arabic fix hook.\n");
+    if (!InstallChapterTelopArabicFtexHook(hGame))
+        Log("[DLL] Failed to install ChapterTelopInfo::GetFtexPathId Arabic hook.\n");
 
-	if (!InstallGetTipsLangBlockPathHook(hGame))
-		Log("[DLL] Failed to install GetTipsLangBlockPath hook.\n");
+    if (!Install_UnkLoadUIDefaultDataFunc_Hook())
+        Log("[DLL] Failed to install UnkLoadUIDefaultDataFunc hook.\n");
 
-	if (!InstallGetPauseHelpLangBlockPathHook(hGame))
-		Log("[DLL] Failed to install GetPauseHelpLangBlockPath hook.\n");
+    if (!InstallUnkLoadTppPartsLangFpkArabicFixHook(hGame))
+        Log("[DLL] Failed to install UnkLoadTppPartsLangFpk Arabic fix hook.\n");
 
+    if (!InstallGetTipsLangBlockPathHook(hGame))
+        Log("[DLL] Failed to install GetTipsLangBlockPath hook.\n");
 
+    if (!InstallGetPauseHelpLangBlockPathHook(hGame))
+        Log("[DLL] Failed to install GetPauseHelpLangBlockPath hook.\n");
 
     Log("[DLL] InitThread done.\n");
     return 0;
 }
 
-// Removes all hooks when the DLL unloads normally.
+// Function: removes installed hooks and frees the proxied system dinput8 when the DLL unloads normally.
+// Params:
+// - processTerminating: true if the process is shutting down
 static void UninstallAll(bool processTerminating)
 {
     if (processTerminating)
         return;
 
     Uninstall_SetLuaFunctions_Hook();
-	RemoveGameLangStateKeepCJKHook();
+    RemoveGameLangStateKeepCJKHook();
     RemoveLangSelectPopupPagedRewriteHooks();
-	RemoveLanguageHook();
-	RemoveShowTextureLogoArabicHook();
-	RemoveChapterTelopArabicFtexHook();
-	RemoveUnkLoadTppPartsLangFpkArabicFixHook();
-	RemoveGetTipsLangBlockPathHook();
-	RemoveGetPauseHelpLangBlockPathHook();
-
+    RemoveLanguageHook();
+    RemoveShowTextureLogoArabicHook();
+    RemoveChapterTelopArabicFtexHook();
+    RemoveUnkLoadTppPartsLangFpkArabicFixHook();
+    RemoveGetTipsLangBlockPathHook();
+    RemoveGetPauseHelpLangBlockPathHook();
 
 
     MH_Uninitialize();
     Log("[DLL] UninstallAll done.\n");
 
+    if (gRealDinput8)
+    {
+        FreeLibrary(gRealDinput8);
+        gRealDinput8 = nullptr;
+        gRealDirectInput8Create = nullptr;
+    }
+
     fflush(stdout);
     fflush(stderr);
 }
 
-// Standard Windows DLL entry point.
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved)
 {
     switch (reason)
