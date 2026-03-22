@@ -3,7 +3,7 @@
 #include <cstdint>
 #include "MinHook.h"
 #include <log.h>
-
+#include <AddressSet.h>
 // ----------------------------------------
 // Opaque engine structs (enough for our use)
 // ----------------------------------------
@@ -56,15 +56,6 @@ using PathDtor_t = void(__fastcall*)(FoxPath* self);
 
 using UnkLoadUIDefaultDataFunc_t = void(__fastcall*)(void* p1, void* p2, void* p3);
 
-static constexpr uintptr_t ABS_IsArabLanguage = 0x145F134E0ull;
-static constexpr uintptr_t ABS_UnkLoadFunc = 0x145F86420ull;
-
-static constexpr uintptr_t ABS_FoxStringCtor = 0x1400163F0ull;
-static constexpr uintptr_t ABS_StdFree = 0x140004200ull;
-static constexpr uintptr_t ABS_PathCInit = 0x140085780ull;
-static constexpr uintptr_t ABS_PathAssign = 0x140085650ull;
-static constexpr uintptr_t ABS_PathDtor = 0x140085610ull;
-static constexpr uintptr_t ABS_LoadPageBlock = 0x140928D10ull;
 
 static FoxStringCtor_t       FoxStringCtor = nullptr;
 static StdFree_t             StdFree = nullptr;
@@ -124,15 +115,15 @@ bool Install_UnkLoadUIDefaultDataFunc_Hook()
     if (!base)
         return false;
 
-    IsArabLanguage = reinterpret_cast<IsArabLanguage_t>(base + ToRva(ABS_IsArabLanguage));
-    FoxStringCtor = reinterpret_cast<FoxStringCtor_t>(base + ToRva(ABS_FoxStringCtor));
-    StdFree = reinterpret_cast<StdFree_t>(base + ToRva(ABS_StdFree));
-    PathCInitWithString = reinterpret_cast<PathCInitWithString_t>(base + ToRva(ABS_PathCInit));
-    PathAssign = reinterpret_cast<PathAssign_t>(base + ToRva(ABS_PathAssign));
-    PathDtor = reinterpret_cast<PathDtor_t>(base + ToRva(ABS_PathDtor));
-    LoadPageBlock = reinterpret_cast<LoadPageBlock_t>(base + ToRva(ABS_LoadPageBlock));
+    IsArabLanguage = reinterpret_cast<IsArabLanguage_t>(base + ToRva(gAddr.IsArabLanguage));
+    FoxStringCtor = reinterpret_cast<FoxStringCtor_t>(base + ToRva(gAddr.FoxStringCtor));
+    StdFree = reinterpret_cast<StdFree_t>(base + ToRva(gAddr.StdFree));
+    PathCInitWithString = reinterpret_cast<PathCInitWithString_t>(base + ToRva(gAddr.PathCInitWithString));
+    PathAssign = reinterpret_cast<PathAssign_t>(base + ToRva(gAddr.PathAssign));
+    PathDtor = reinterpret_cast<PathDtor_t>(base + ToRva(gAddr.PathDtor));
+    LoadPageBlock = reinterpret_cast<LoadPageBlock_t>(base + ToRva(gAddr.LoadPageBlock));
 
-    void* target = reinterpret_cast<void*>(base + ToRva(ABS_UnkLoadFunc));
+    void* target = reinterpret_cast<void*>(base + ToRva(gAddr.UnkLoadUIDefaultDataFunc));
 
     const MH_STATUS initSt = MH_Initialize();
     if (initSt != MH_OK && initSt != MH_ERROR_ALREADY_INITIALIZED)

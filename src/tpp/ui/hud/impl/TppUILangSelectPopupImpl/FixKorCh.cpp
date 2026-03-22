@@ -19,15 +19,13 @@
 #include <cstdio>
 #include "MinHook.h"
 #include "log.h"
+#include "AddressSet.h"
 
 // ------------------------------------------------------------
 // Address constants
 // ------------------------------------------------------------
 
 static constexpr uintptr_t IDA_IMAGE_BASE = 0x140000000ull;
-static constexpr uintptr_t ABS_GetGameLanguageState = 0x146084A80ull; // returns *(u32*)(this+0x39D0)
-static constexpr uintptr_t ABS_SetGameLanguageState = 0x14094E950ull; // writes lang state
-static constexpr uintptr_t ABS_GameConfigGetInstance = 0x14052F9C0ull;
 
 // ------------------------------------------------------------
 // Globals
@@ -406,13 +404,13 @@ bool InstallGameLangStateKeepCJKHook(HMODULE hGame)
     EnsurePersistLoaded();
 
     gGameConfigGetInstance =
-        reinterpret_cast<GameConfigGetInstance_t>(ToRuntimeVA(hGame, ABS_GameConfigGetInstance));
+        reinterpret_cast<GameConfigGetInstance_t>(ToRuntimeVA(hGame, gAddr.GameConfigGetInstance));
 
     gTargetGetGameLanguageState =
-        reinterpret_cast<void*>(ToRuntimeVA(hGame, ABS_GetGameLanguageState));
+        reinterpret_cast<void*>(ToRuntimeVA(hGame, gAddr.GetGameLanguageState));
 
     gTargetSetGameLanguageState =
-        reinterpret_cast<void*>(ToRuntimeVA(hGame, ABS_SetGameLanguageState));
+        reinterpret_cast<void*>(ToRuntimeVA(hGame, gAddr.SetGameLanguageState));
 
     if (!gTargetGetGameLanguageState || !gTargetSetGameLanguageState)
     {

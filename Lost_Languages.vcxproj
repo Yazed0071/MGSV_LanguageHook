@@ -143,6 +143,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="AddressSet.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="include\FoxHashes.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
@@ -173,6 +174,7 @@
     <ClInclude Include="pch.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="AddressSet.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="include\FoxHashes.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
@@ -185,6 +187,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="src\fox\ui\lang\Init.cpp" />
     <ClCompile Include="src\tpp\ui\hud\ChapterTelopInfo\GetFtexPathId.cpp" />
     <ClCompile Include="src\tpp\ui\hud\impl\TppUILangSelectPopupImpl\FixKorCh.cpp" />
     <ClCompile Include="src\tpp\ui\hud\impl\TppUILangSelectPopupImpl\FUN_145cc6360.cpp" />
@@ -196,7 +199,6 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="src\tpp\ui\menu\impl\MotherBaseDevicePauseHelpTableImpl\GetPauseHelpLangBlockPath.cpp" />
-    <ClCompile Include="src\tpp\ui\UiCommand\ShowChapterTelop.cpp" />
     <ClCompile Include="src\tpp\ui\UiCommand\ShowTextureLogo.cpp" />
     <ClCompile Include="src\tpp\ui\lang\UnkLoadUIDefaultDataFunc.cpp" />
   </ItemGroup>

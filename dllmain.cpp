@@ -5,6 +5,7 @@
 
 #include "MinHook.h"
 #include "log.h"
+#include "AddressSet.h"
 
 bool InstallGameLangStateKeepCJKHook(HMODULE hGame);
 bool InstallLangSelectPopupPagedRewriteHooks(HMODULE hGame);
@@ -15,6 +16,7 @@ bool Install_UnkLoadUIDefaultDataFunc_Hook();
 bool InstallUnkLoadTppPartsLangFpkArabicFixHook(HMODULE hGame);
 bool InstallGetTipsLangBlockPathHook(HMODULE hGame);
 bool InstallGetPauseHelpLangBlockPathHook(HMODULE hGame);
+bool InstallUiLangInitExtraLoadFuncsHook(HMODULE hGame);
 
 void RemoveGameLangStateKeepCJKHook();
 void RemoveLangSelectPopupPagedRewriteHooks();
@@ -24,6 +26,7 @@ void RemoveChapterTelopArabicFtexHook();
 void RemoveUnkLoadTppPartsLangFpkArabicFixHook();
 void RemoveGetTipsLangBlockPathHook();
 void RemoveGetPauseHelpLangBlockPathHook();
+void RemoveUiLangInitExtraLoadFuncsHook();
 
 namespace
 {
@@ -32,16 +35,22 @@ namespace
 
     static HMODULE gRealDinput8 = nullptr;
 
-    // What it does: function pointer type for the real system DirectInput8Create.
-    // Params: same params as DirectInput8Create.
+    // Function: pointer type for the real system DirectInput8Create.
+    // Params:
+    // - hinst: module instance
+    // - dwVersion: DirectInput version
+    // - riidltf: requested interface id
+    // - ppvOut: returned interface pointer
+    // - punkOuter: outer unknown for aggregation
     using DirectInput8Create_t =
         HRESULT(WINAPI*)(HINSTANCE, DWORD, REFIID, LPVOID*, LPVOID);
 
     static DirectInput8Create_t gRealDirectInput8Create = nullptr;
 }
 
-// What it does: loads the real system dinput8.dll and resolves DirectInput8Create.
-// Params: none.
+// Function: loads the real system dinput8.dll and resolves DirectInput8Create.
+// Params:
+// - none
 static void LoadRealDinput8()
 {
     if (gRealDinput8)
@@ -60,8 +69,13 @@ static void LoadRealDinput8()
             GetProcAddress(gRealDinput8, "DirectInput8Create"));
 }
 
-// What it does: exported proxy for DirectInput8Create so the game can still use the real system dinput8.
-// Params: standard DirectInput8Create params from the game.
+// Function: exported proxy for DirectInput8Create so the game can still call the real one.
+// Params:
+// - hinst: module instance
+// - dwVersion: DirectInput version
+// - riidltf: requested interface id
+// - ppvOut: returned interface pointer
+// - punkOuter: outer unknown for aggregation
 extern "C" __declspec(dllexport)
 HRESULT WINAPI DirectInput8Create(
     HINSTANCE hinst,
@@ -83,8 +97,9 @@ HRESULT WINAPI DirectInput8Create(
         punkOuter);
 }
 
-// What it does: creates or attaches a console for debug logging.
-// Params: none.
+// Function: creates or attaches a console for debug logging.
+// Params:
+// - none
 static void SetupConsole()
 {
     if (gConsoleReady.load())
@@ -105,8 +120,11 @@ static void SetupConsole()
     fflush(stdout);
 }
 
-// What it does: initializes MinHook and installs all runtime hooks on a worker thread.
-// Params: unused thread parameter.
+// Function: initializes MinHook and installs all runtime hooks on a worker thread.
+// Params:
+// - unused: unused thread parameter
+// Returns:
+// - thread exit code
 static DWORD WINAPI InitThread(LPVOID)
 {
     #ifdef _DEBUG
@@ -115,9 +133,21 @@ static DWORD WINAPI InitThread(LPVOID)
 
     HMODULE hGame = GetModuleHandleA("mgsvtpp.exe");
     if (!hGame)
-        hGame = GetModuleHandle(nullptr);
+        hGame = GetModuleHandleW(nullptr);
 
-    Log("[DLL] InitThread started.\n");
+    if (!hGame)
+    {
+        Log("[DLL] Failed to get game module.\n");
+        return 0;
+    }
+
+    if (!ResolveAddressSet(hGame))
+    {
+        Log("[DLL] ResolveAddressSet failed.\n");
+        return 0;
+    }
+
+    Log("[DLL] InitThread started. build=%s\n", GetGameBuildName(gGameBuild));
 
     const MH_STATUS st = MH_Initialize();
     Log("[DLL] MH_Initialize -> %d\n", static_cast<int>(st));
@@ -151,12 +181,16 @@ static DWORD WINAPI InitThread(LPVOID)
     if (!InstallGetPauseHelpLangBlockPathHook(hGame))
         Log("[DLL] Failed to install GetPauseHelpLangBlockPath hook.\n");
 
+    //if (!InstallUiLangInitExtraLoadFuncsHook(hGame))
+    //    Log("[DLL] Failed to install InstallUiLangInitExtraLoadFuncsHook hook.\n");
+
     Log("[DLL] InitThread done.\n");
     return 0;
 }
 
-// What it does: removes installed hooks and frees the proxied system dinput8 when the DLL unloads normally.
-// Params: processTerminating tells whether the process is shutting down.
+// Function: removes installed hooks and frees the proxied system dinput8 when the DLL unloads normally.
+// Params:
+// - processTerminating: true if the process is shutting down
 static void UninstallAll(bool processTerminating)
 {
     if (processTerminating)
@@ -170,6 +204,8 @@ static void UninstallAll(bool processTerminating)
     RemoveUnkLoadTppPartsLangFpkArabicFixHook();
     RemoveGetTipsLangBlockPathHook();
     RemoveGetPauseHelpLangBlockPathHook();
+    //RemoveUiLangInitExtraLoadFuncsHook();
+
 
     MH_Uninitialize();
     Log("[DLL] UninstallAll done.\n");
@@ -185,8 +221,6 @@ static void UninstallAll(bool processTerminating)
     fflush(stderr);
 }
 
-// What it does: standard Windows DLL entry point that starts your init thread.
-// Params: standard DllMain params.
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved)
 {
     switch (reason)

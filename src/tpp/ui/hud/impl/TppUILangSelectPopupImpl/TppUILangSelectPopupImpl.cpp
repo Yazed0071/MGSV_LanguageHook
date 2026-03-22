@@ -39,18 +39,13 @@
 #include <atomic>
 #include "MinHook.h"
 #include "log.h"
+#include <AddressSet.h>
 
 // ------------------------------------------------------------
 // Address constants
 // ------------------------------------------------------------
 
 static constexpr uintptr_t IDA_IMAGE_BASE = 0x140000000ull;
-static constexpr uintptr_t ABS_SetSelectLangList = 0x14A4140D0ull;
-static constexpr uintptr_t ABS_UpdateLangList = 0x141606250ull;
-static constexpr uintptr_t ABS_DecideLangList = 0x14A412670ull;
-static constexpr uintptr_t ABS_UpdateLangPopup = 0x141606490ull;
-static constexpr uintptr_t ABS_ChangeLanguage = 0x14090F130ull;
-static constexpr uintptr_t ABS_ApplyFormVariation = 0x1404E1E60ull;
 
 // Layout property hashes used by the game's +0x590 setter.
 static constexpr uint64_t HASH_TRANSLATE_X = 0x1352A707068Bull;
@@ -1401,6 +1396,9 @@ static void StartApplyRescueTimeoutThread()
 // - true on success
 // ------------------------------------------------------------
 
+
+
+
 static bool PrepareApplyFormVariationRescueHook()
 {
     if (gApplyRescueHookCreated.load())
@@ -1411,7 +1409,7 @@ static bool PrepareApplyFormVariationRescueHook()
         return false;
 
     gTargetApplyFormVariation =
-        reinterpret_cast<void*>(ToRuntimeVA(hGame, ABS_ApplyFormVariation));
+        reinterpret_cast<void*>(ToRuntimeVA(hGame, gAddr.ApplyFormVariation));
 
     if (!gTargetApplyFormVariation)
     {
@@ -1789,26 +1787,17 @@ static void __fastcall hkChangeLanguage(uint32_t langId)
         oChangeLanguage(langId);
 }
 
-// ------------------------------------------------------------
-// Function: InstallLangSelectPopupPagedRewriteHooks
-// Installs the fake-scroll rewrite hooks for the language popup.
-// The exported name is kept unchanged so existing dllmain code can stay.
-// Params:
-// - hGame: game module base
-// Returns:
-// - true on success
-// ------------------------------------------------------------
 
 bool InstallLangSelectPopupPagedRewriteHooks(HMODULE hGame)
 {
     if (!hGame)
         return false;
 
-    gTargetSetSelectLangList = reinterpret_cast<void*>(ToRuntimeVA(hGame, ABS_SetSelectLangList));
-    gTargetUpdateLangList = reinterpret_cast<void*>(ToRuntimeVA(hGame, ABS_UpdateLangList));
-    gTargetDecideLangList = reinterpret_cast<void*>(ToRuntimeVA(hGame, ABS_DecideLangList));
-    gTargetUpdateLangPopup = reinterpret_cast<void*>(ToRuntimeVA(hGame, ABS_UpdateLangPopup));
-    gTargetChangeLanguage = reinterpret_cast<void*>(ToRuntimeVA(hGame, ABS_ChangeLanguage));
+    gTargetSetSelectLangList = reinterpret_cast<void*>(ToRuntimeVA(hGame, gAddr.SetSelectLangList));
+    gTargetUpdateLangList = reinterpret_cast<void*>(ToRuntimeVA(hGame, gAddr.UpdateLangList));
+    gTargetDecideLangList = reinterpret_cast<void*>(ToRuntimeVA(hGame, gAddr.DecideLangList));
+    gTargetUpdateLangPopup = reinterpret_cast<void*>(ToRuntimeVA(hGame, gAddr.UpdateLangPopup));
+    gTargetChangeLanguage = reinterpret_cast<void*>(ToRuntimeVA(hGame, gAddr.ChangeLanguage));
 
     if (!gTargetSetSelectLangList || !gTargetUpdateLangList ||
         !gTargetDecideLangList || !gTargetUpdateLangPopup || !gTargetChangeLanguage)
