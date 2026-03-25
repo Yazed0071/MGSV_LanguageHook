@@ -53,10 +53,10 @@ static constexpr uintptr_t IDA_IMAGE_BASE = 0x140000000ull;
 // - none
 static constexpr uint64_t kArabicChapterTextureIds[4] =
 {
-    0x156A29CFCE9E441Bull, // code 0
-    0x156BA1F26ECBDBD4ull, // code 1
-    0x156A0FFB69549AAAull, // code 2
-    0x15681FBE4CC91DFAull  // code 3
+    0x156A29CFCE9E441Bull, // /Assets/tpp/ui/texture/Chapter/terop_chapter_1_ara_alp_nmp.ftex
+    0x156BA1F26ECBDBD4ull, // /Assets/tpp/ui/texture/Chapter/terop_chapter_2_ara_alp_nmp.ftex
+    0x156A0FFB69549AAAull, // /Assets/tpp/ui/texture/Chapter/terop_chapter_3_ara_alp_nmp.ftex
+    0x15681FBE4CC91DFAull  // /Assets/tpp/ui/texture/Chapter/terop_chapter_4_ara_alp_nmp.ftex
 };
 
 // ------------------------------------------------------------
