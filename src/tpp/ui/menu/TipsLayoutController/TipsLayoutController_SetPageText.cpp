@@ -14,18 +14,24 @@ namespace
     using TipsLayoutController_SetPageText_t =
         uint64_t(__fastcall*)(void* thisPtr, void* titleTextUnit, void* bodyTextUnit, uint32_t bodyParam);
 
+    using SetTextForModelNodeText_t =
+        void(__fastcall*)(void* modelNodeText, void* textUnit, const char* text, uint8_t flag);
+
     static IsArabLanguage_t gIsArabLanguage = nullptr;
     static TipsLayoutController_SetPageText_t gOrigSetPageText = nullptr;
+    static SetTextForModelNodeText_t gSetTextForModelNodeText = nullptr;
     static void* gTarget = nullptr;
+
+    static constexpr uint8_t TEXT_ALIGN_RIGHT = 2;
 
     static constexpr ptrdiff_t kTitleNodeOffset = 0x18;
     static constexpr ptrdiff_t kBodyNodeOffset = 0x20;
-    static constexpr ptrdiff_t kModelNodeTextAlignmentOffset = 0xD8;
-
-    static constexpr uint32_t kArabicRightAlignment = 2;
+    static constexpr ptrdiff_t kAlignOffset = 0xD8;
+    static constexpr ptrdiff_t kTitleBufOffset = 0x6A;
+    static constexpr size_t    kTitleBufSize = 100;
 }
 
-/* Checks Arabic state safely. Parameters: none. */
+/* Checks Arabic state safely. */
 static bool IsArabicSafe()
 {
     if (!gIsArabLanguage)
@@ -41,7 +47,39 @@ static bool IsArabicSafe()
     }
 }
 
-/* Safely reads a bounded c-string. Parameters: src = source string, maxLen = maximum bytes, out = destination string. */
+/* Safely reads a pointer. */
+static bool SafeReadPtr(const void* addr, void*& out)
+{
+    __try
+    {
+        out = *reinterpret_cast<void* const*>(addr);
+        return true;
+    }
+    __except (EXCEPTION_EXECUTE_HANDLER)
+    {
+        out = nullptr;
+        return false;
+    }
+}
+
+/* Safely writes one byte. */
+static bool SafeWriteU8(void* addr, uint8_t value)
+{
+    __try
+    {
+        if (!addr)
+            return false;
+
+        *reinterpret_cast<uint8_t*>(addr) = value;
+        return true;
+    }
+    __except (EXCEPTION_EXECUTE_HANDLER)
+    {
+        return false;
+    }
+}
+
+/* Safely reads a bounded c-string. */
 static bool SafeReadCString(const char* src, size_t maxLen, std::string& out)
 {
     __try
@@ -66,7 +104,7 @@ static bool SafeReadCString(const char* src, size_t maxLen, std::string& out)
     }
 }
 
-/* Safely writes a bounded c-string. Parameters: dst = destination buffer, dstSize = buffer size, src = source text. */
+/* Safely writes a bounded c-string. */
 static bool SafeWriteCString(char* dst, size_t dstSize, const char* src)
 {
     __try
@@ -89,42 +127,27 @@ static bool SafeWriteCString(char* dst, size_t dstSize, const char* src)
     }
 }
 
-/* Safely reads a 32-bit field. Parameters: src = source address, outValue = returned value. */
-static bool SafeReadU32(const void* src, uint32_t& outValue)
+/* Gets a node pointer from the controller. */
+static void* GetNodePtr(void* thisPtr, ptrdiff_t offset)
 {
-    __try
-    {
-        if (!src)
-            return false;
+    if (!thisPtr)
+        return nullptr;
 
-        outValue = *reinterpret_cast<const uint32_t*>(src);
-        return true;
-    }
-    __except (EXCEPTION_EXECUTE_HANDLER)
-    {
-        outValue = 0;
-        return false;
-    }
+    void* node = nullptr;
+    SafeReadPtr(reinterpret_cast<uint8_t*>(thisPtr) + offset, node);
+    return node;
 }
 
-/* Safely writes a 32-bit field. Parameters: dst = destination address, value = value to write. */
-static bool SafeWriteU32(void* dst, uint32_t value)
+/* Forces one ModelNodeText to right alignment. */
+static void ForceRightAlignNode(void* node)
 {
-    __try
-    {
-        if (!dst)
-            return false;
+    if (!node)
+        return;
 
-        *reinterpret_cast<uint32_t*>(dst) = value;
-        return true;
-    }
-    __except (EXCEPTION_EXECUTE_HANDLER)
-    {
-        return false;
-    }
+    SafeWriteU8(reinterpret_cast<uint8_t*>(node) + kAlignOffset, TEXT_ALIGN_RIGHT);
 }
 
-/* Removes one trailing space before the page suffix. Parameters: s = source title string. */
+/* Trims one trailing space before "(x/y)". */
 static std::string TrimRightOneSpace(const std::string& s)
 {
     if (!s.empty() && s.back() == ' ')
@@ -133,22 +156,7 @@ static std::string TrimRightOneSpace(const std::string& s)
     return s;
 }
 
-/* Checks whether the title ends with a page suffix like "(1/5)". Parameters: text = title buffer text. */
-static bool HasPageCounterSuffix(const char* text)
-{
-    if (!text || !*text)
-        return false;
-
-    const char* open = std::strrchr(text, '(');
-    if (!open)
-        return false;
-
-    int currentPage = 0;
-    int totalPages = 0;
-    return sscanf_s(open, "(%d/%d)", &currentPage, &totalPages) == 2;
-}
-
-/* Rewrites "Title (1/5)" into "(5/1) Title". Parameters: src = original built title. */
+/* Rewrites "Title (1/5)" into "(5/1) Title". */
 static std::string RewriteTipsPageTitleArabic(const std::string& src)
 {
     if (src.empty())
@@ -170,96 +178,49 @@ static std::string RewriteTipsPageTitleArabic(const std::string& src)
     if (title.empty())
         return src;
 
-    char rebuilt[128] = {};
-    _snprintf_s(rebuilt, sizeof(rebuilt), _TRUNCATE, "(%d/%d) %s", totalPages, currentPage, title.c_str());
+    char rebuilt[kTitleBufSize] = {};
+    _snprintf_s(
+        rebuilt,
+        sizeof(rebuilt),
+        _TRUNCATE,
+        "(%d/%d) %s",
+        totalPages,
+        currentPage,
+        title.c_str());
+
     return std::string(rebuilt);
 }
 
-/* Rewrites the already-built title buffer in the controller. Parameters: thisPtr = TipsLayoutController instance. */
-static void ApplyArabicTipsPageTitleFix(void* thisPtr)
+/* Rewrites the title buffer and refreshes the title node. */
+static void RefreshArabicTitle(void* thisPtr, void* titleTextUnit)
 {
-    if (!thisPtr)
+    if (!thisPtr || !gSetTextForModelNodeText)
         return;
 
     auto* base = reinterpret_cast<uint8_t*>(thisPtr);
-    char* titleBuf = reinterpret_cast<char*>(base + 0x6A);
+    char* titleBuf = reinterpret_cast<char*>(base + kTitleBufOffset);
 
     std::string before;
-    if (!SafeReadCString(titleBuf, 100, before))
-        return;
-
-    if (!HasPageCounterSuffix(before.c_str()))
+    if (!SafeReadCString(titleBuf, kTitleBufSize, before))
         return;
 
     const std::string after = RewriteTipsPageTitleArabic(before);
-    if (after == before)
+    if (after.empty() || after == before)
         return;
 
-    if (!SafeWriteCString(titleBuf, 100, after.c_str()))
+    if (!SafeWriteCString(titleBuf, kTitleBufSize, after.c_str()))
         return;
+
+    void* titleNode = GetNodePtr(thisPtr, kTitleNodeOffset);
+    if (!titleNode)
+        return;
+
+    ForceRightAlignNode(titleNode);
+    gSetTextForModelNodeText(titleNode, titleTextUnit, titleBuf, 1);
+    ForceRightAlignNode(titleNode);
 
     Log("[TipsLayoutController::SetPageText] before: %s\n", before.c_str());
     Log("[TipsLayoutController::SetPageText] after : %s\n", after.c_str());
-}
-
-/* Gets a model node pointer from the controller. Parameters: thisPtr = controller, offset = field offset. */
-static void* GetNodePtr(void* thisPtr, ptrdiff_t offset)
-{
-    if (!thisPtr)
-        return nullptr;
-
-    __try
-    {
-        auto* base = reinterpret_cast<uint8_t*>(thisPtr);
-        return *reinterpret_cast<void**>(base + offset);
-    }
-    __except (EXCEPTION_EXECUTE_HANDLER)
-    {
-        return nullptr;
-    }
-}
-
-/* Gets the alignment field address from a ModelNodeText. Parameters: modelNode = node pointer. */
-static void* GetAlignmentFieldPtr(void* modelNode)
-{
-    if (!modelNode)
-        return nullptr;
-
-    return reinterpret_cast<uint8_t*>(modelNode) + kModelNodeTextAlignmentOffset;
-}
-
-/* Temporarily sets body alignment so CreateBoxText inside SetPageText uses RTL alignment. Parameters: thisPtr = controller, oldValue = saved old alignment, changed = whether write succeeded. */
-static void BeginTemporaryBodyAlignment(void* thisPtr, uint32_t& oldValue, bool& changed)
-{
-    changed = false;
-    oldValue = 0;
-
-    void* bodyNode = GetNodePtr(thisPtr, kBodyNodeOffset);
-    void* alignField = GetAlignmentFieldPtr(bodyNode);
-    if (!alignField)
-        return;
-
-    if (!SafeReadU32(alignField, oldValue))
-        return;
-
-    if (!SafeWriteU32(alignField, kArabicRightAlignment))
-        return;
-
-    changed = true;
-}
-
-/* Restores the original body alignment after SetPageText finishes. Parameters: thisPtr = controller, oldValue = saved alignment, changed = whether restore is needed. */
-static void EndTemporaryBodyAlignment(void* thisPtr, uint32_t oldValue, bool changed)
-{
-    if (!changed)
-        return;
-
-    void* bodyNode = GetNodePtr(thisPtr, kBodyNodeOffset);
-    void* alignField = GetAlignmentFieldPtr(bodyNode);
-    if (!alignField)
-        return;
-
-    SafeWriteU32(alignField, oldValue);
 }
 
 /* Hook for TipsLayoutController::SetPageText(this, titleTextUnit, bodyTextUnit, bodyParam). */
@@ -272,56 +233,60 @@ static uint64_t __fastcall hkTipsLayoutController_SetPageText(
     if (!gOrigSetPageText)
         return 0;
 
-    if (!IsArabicSafe() || !thisPtr)
-        return gOrigSetPageText(thisPtr, titleTextUnit, bodyTextUnit, bodyParam);
+    const uint64_t result =
+        gOrigSetPageText(thisPtr, titleTextUnit, bodyTextUnit, bodyParam);
 
-    uint32_t oldBodyAlignment = 0;
-    bool bodyAlignmentChanged = false;
+    if (!IsArabicSafe() || !thisPtr)
+        return result;
+
+    void* titleNode = GetNodePtr(thisPtr, kTitleNodeOffset);
+    void* bodyNode = GetNodePtr(thisPtr, kBodyNodeOffset);
 
     // Important:
-    // Set the body node alignment BEFORE the original function runs,
-    // so the original CreateBoxText call uses RTL alignment.
-    BeginTemporaryBodyAlignment(thisPtr, oldBodyAlignment, bodyAlignmentChanged);
+    // Do NOT restore here.
+    // For this target, we want these nodes to stay RTL in Arabic.
+    ForceRightAlignNode(titleNode);
+    ForceRightAlignNode(bodyNode);
 
-    const uint64_t result = gOrigSetPageText(thisPtr, titleTextUnit, bodyTextUnit, bodyParam);
-
-    // Restore immediately so the node does not stay permanently modified.
-    EndTemporaryBodyAlignment(thisPtr, oldBodyAlignment, bodyAlignmentChanged);
-
-    // Title fix can safely happen after the original builds the title buffer.
-    ApplyArabicTipsPageTitleFix(thisPtr);
+    RefreshArabicTitle(thisPtr, titleTextUnit);
 
     return result;
 }
 
-/* Installs the TipsLayoutController::SetPageText Arabic hook. Parameters: hGame = game module handle. */
+/* Installs the TipsLayoutController::SetPageText Arabic hook. */
 bool InstallTipsLayoutControllerSetPageTextHook(HMODULE hGame)
 {
     UNREFERENCED_PARAMETER(hGame);
 
-    if (!gAddr.IsArabLanguage || !gAddr.SetPageText)
+    if (!gAddr.IsArabLanguage || !gAddr.SetPageText || !gAddr.SetTextForModelNodeText)
     {
         Log("[TipsLayoutController::SetPageText] Missing address.\n");
         return false;
     }
 
     gIsArabLanguage = reinterpret_cast<IsArabLanguage_t>(gAddr.IsArabLanguage);
+    gSetTextForModelNodeText = reinterpret_cast<SetTextForModelNodeText_t>(gAddr.SetTextForModelNodeText);
     gTarget = reinterpret_cast<void*>(gAddr.SetPageText);
+
     if (!gTarget)
         return false;
 
-    if (MH_CreateHook(
-        gTarget,
-        &hkTipsLayoutController_SetPageText,
-        reinterpret_cast<LPVOID*>(&gOrigSetPageText)) != MH_OK)
+    const MH_STATUS createSt =
+        MH_CreateHook(
+            gTarget,
+            reinterpret_cast<void*>(&hkTipsLayoutController_SetPageText),
+            reinterpret_cast<void**>(&gOrigSetPageText));
+
+    if (createSt != MH_OK && createSt != MH_ERROR_ALREADY_CREATED)
     {
-        Log("[TipsLayoutController::SetPageText] MH_CreateHook failed.\n");
+        Log("[TipsLayoutController::SetPageText] MH_CreateHook failed: %d\n", static_cast<int>(createSt));
         return false;
     }
 
-    if (MH_EnableHook(gTarget) != MH_OK)
+    const MH_STATUS enableSt = MH_EnableHook(gTarget);
+    if (enableSt != MH_OK && enableSt != MH_ERROR_ENABLED)
     {
-        Log("[TipsLayoutController::SetPageText] MH_EnableHook failed.\n");
+        Log("[TipsLayoutController::SetPageText] MH_EnableHook failed: %d\n", static_cast<int>(enableSt));
         return false;
     }
 
@@ -329,7 +294,7 @@ bool InstallTipsLayoutControllerSetPageTextHook(HMODULE hGame)
     return true;
 }
 
-/* Removes the TipsLayoutController::SetPageText Arabic hook. Parameters: none. */
+/* Removes the TipsLayoutController::SetPageText Arabic hook. */
 void RemoveTipsLayoutControllerSetPageTextHook()
 {
     if (gTarget)
@@ -340,6 +305,7 @@ void RemoveTipsLayoutControllerSetPageTextHook()
     }
 
     gOrigSetPageText = nullptr;
+    gSetTextForModelNodeText = nullptr;
     gIsArabLanguage = nullptr;
 
     Log("[TipsLayoutController::SetPageText] Arabic hook removed.\n");
