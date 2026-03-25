@@ -73,8 +73,6 @@ struct AddressSet
     uintptr_t SetMenuNameText = 0;
     uintptr_t GetLangText = 0;
     uintptr_t MbDvcMissionListRecordCallFuncStart = 0;
-    uintptr_t SecurityUpdateEventLogInfo = 0;
-    uintptr_t SecurityGetEventLogTypingText = 0;
     uintptr_t MbDvcSideOpsRecordCallFuncViewRecord = 0;
     uintptr_t MissionPreparationCallbackImpl_SetupMissionName = 0;
     uintptr_t EquipDetailsCallbackImpl_CreateCarryingDifferenceText = 0;

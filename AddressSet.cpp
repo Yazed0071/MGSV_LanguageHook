@@ -74,8 +74,6 @@ static const AddressSet kEnglish = {
     0x145C5FCD0ull, // SetMenuNameText
     0x1409122D0ull, // GetLangText
     0x140F33E20ull, // MbDvcMissionListRecordCallFuncStart
-    0x1419A47B0ull, // SecurityUpdateEventLogInfo
-    0x1419914F0ull, // SecurityGetEventLogTypingText
     0x149476B10ull, // MbDvcSideOpsRecordCallFuncViewRecord
     0x1416C1080ull, // MissionPreparationCallbackImpl_SetupMissionName
     0x14A4D94F0ull, // EquipDetailsCallbackImpl_CreateCarryingDifferenceText
@@ -162,8 +160,6 @@ static const AddressSet kJapanese = {
     0x0ull, // SetMenuNameText
     0x0ull, // GetLangText
     0x0ull, // MbDvcMissionListRecordCallFuncStart
-    0x0ull, // SecurityUpdateEventLogInfo
-    0x0ull, // SecurityGetEventLogTypingText
     0x0ull, // MbDvcSideOpsRecordCallFuncViewRecord
     0x0ull, // MissionPreparationCallbackImpl_SetupMissionName
     0x0ull, // EquipDetailsCallbackImpl_CreateCarryingDifferenceText

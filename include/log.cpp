@@ -11,9 +11,6 @@ static FILE* g_LogFile = nullptr;
 void InitLog()
 {
     #if _DEBUG
-
-    #endif // _DEBUG
-
     AllocConsole();
     FILE* dummy;
     freopen_s(&dummy, "CONOUT$", "w", stdout);
@@ -30,6 +27,8 @@ void InitLog()
     fopen_s(&g_LogFile, path, "w");
     if (g_LogFile)
         fprintf(g_LogFile, "[LOG] Log file created successfully.\n");
+    #endif // _DEBUG
+
 }
 
 void Log(const char* fmt, ...)
@@ -53,6 +52,7 @@ void Log(const char* fmt, ...)
 
 void CloseLog()
 {
+    #if _DEBUG
     if (g_LogFile)
     {
         fprintf(g_LogFile, "[LOG] Closing log.\n");
@@ -60,4 +60,5 @@ void CloseLog()
         g_LogFile = nullptr;
     }
     FreeConsole();
+    #endif // _DEBUG
 }

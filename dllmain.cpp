@@ -1,9 +1,18 @@
 #include "pch.h"
 #include <Windows.h>
+#include <unknwn.h>
 #include <atomic>
+#include <cwchar>
 #include "MinHook.h"
 #include "log.h"
 #include "AddressSet.h"
+
+#define VRL_ENABLE_AUTO_INIT_THREAD 1
+#define VRL_ENABLE_DINPUT8_PROXY    1
+#define VRL_PROXY_ONLY_IF_NAMED_DINPUT8 1
+#define VRL_ENABLE_SECURITY_UPDATE_EVENT_LOG_INFO_HOOK      0
+#define VRL_ENABLE_SECURITY_GET_EVENT_LOG_TYPING_TEXT_HOOK  0
+
 
 bool InstallGameLangStateKeepCJKHook(HMODULE hGame);
 bool InstallLangSelectPopupPagedRewriteHooks(HMODULE hGame);
@@ -61,12 +70,6 @@ void RemoveMbTitleEvSetMenuNameTextArabicHook();
 bool InstallMbDvcMissionListRecordCallFuncStartArabicFormatHook(HMODULE hGame);
 void RemoveMbDvcMissionListRecordCallFuncStartArabicFormatHook();
 
-bool InstallSecurityUpdateEventLogInfoArabicHook(HMODULE hGame);
-void RemoveSecurityUpdateEventLogInfoArabicHook();
-
-bool InstallSecurityGetEventLogTypingTextArabicHook(HMODULE hGame);
-void RemoveSecurityGetEventLogTypingTextArabicHook();
-
 bool InstallMbDvcSideOpsRecordCallFuncViewRecordArabicHook(HMODULE hGame);
 void RemoveMbDvcSideOpsRecordCallFuncViewRecordArabicHook();
 
@@ -84,9 +87,6 @@ void RemoveTppUIInfoTypingTextImplSetTypingTextArabicHook();
 
 bool InstallLoadoutPanelInfoRefreshLoadoutTextArabicHook(HMODULE hGame);
 void RemoveLoadoutPanelInfoRefreshLoadoutTextArabicHook();
-
-bool InstallTipsLayoutControllerSetPageTextHook(HMODULE hGame);
-void RemoveTipsLayoutControllerSetPageTextHook();
 
 bool InstallItemSelectorRecordCallFuncUpdateRecordsArabicHook(HMODULE hGame);
 void RemoveItemSelectorRecordCallFuncUpdateRecordsArabicHook();
@@ -120,12 +120,220 @@ void RemoveSetEquipBackgroundTextureArabicHook();
 
 bool InstallMbDvcSideOpsCallbackImplUpdateInformationTextBoxArabicHook(HMODULE hGame);
 void RemoveMbDvcSideOpsCallbackImplUpdateInformationTextBoxArabicHook();
+
+// ------------------------------------------------------------
+// dinput8 proxy
+// ------------------------------------------------------------
+
+#if VRL_ENABLE_DINPUT8_PROXY
+
+#pragma comment(linker, "/EXPORT:DirectInput8Create=ProxyDirectInput8Create")
+#pragma comment(linker, "/EXPORT:DllCanUnloadNow=ProxyDllCanUnloadNow")
+#pragma comment(linker, "/EXPORT:DllGetClassObject=ProxyDllGetClassObject")
+#pragma comment(linker, "/EXPORT:DllRegisterServer=ProxyDllRegisterServer")
+#pragma comment(linker, "/EXPORT:DllUnregisterServer=ProxyDllUnregisterServer")
+#pragma comment(linker, "/EXPORT:GetdfDIJoystick=ProxyGetdfDIJoystick")
+
+using DirectInput8Create_t = HRESULT(WINAPI*)(HINSTANCE, DWORD, REFIID, LPVOID*, LPUNKNOWN);
+using DllCanUnloadNow_t = HRESULT(STDAPICALLTYPE*)();
+using DllGetClassObject_t = HRESULT(STDAPICALLTYPE*)(REFCLSID, REFIID, LPVOID*);
+using DllRegisterServer_t = HRESULT(STDAPICALLTYPE*)();
+using DllUnregisterServer_t = HRESULT(STDAPICALLTYPE*)();
+using GetdfDIJoystick_t = const void* (WINAPI*)();
+
+static HMODULE gRealDInput8 = nullptr;
+static DirectInput8Create_t  gRealDirectInput8Create = nullptr;
+static DllCanUnloadNow_t     gRealDllCanUnloadNow = nullptr;
+static DllGetClassObject_t   gRealDllGetClassObject = nullptr;
+static DllRegisterServer_t   gRealDllRegisterServer = nullptr;
+static DllUnregisterServer_t gRealDllUnregisterServer = nullptr;
+static GetdfDIJoystick_t     gRealGetdfDIJoystick = nullptr;
+
+#endif
+
 namespace
 {
     static std::atomic_bool gInitialized{ false };
     static std::atomic_bool gInitStarted{ false };
 }
 
+/* Checks if this DLL file is actually named dinput8.dll. Parameters: hModule = current DLL module. */
+static bool IsCurrentModuleNamedDInput8(HMODULE hModule)
+{
+    if (!hModule)
+        return false;
+
+    wchar_t path[MAX_PATH] = {};
+    if (GetModuleFileNameW(hModule, path, MAX_PATH) == 0)
+        return false;
+
+    const wchar_t* fileName = wcsrchr(path, L'\\');
+    fileName = fileName ? (fileName + 1) : path;
+
+    return _wcsicmp(fileName, L"dinput8.dll") == 0;
+}
+
+#if VRL_ENABLE_DINPUT8_PROXY
+
+/* Returns true if proxy mode should be active. Parameters: hModule = current DLL module. */
+static bool ShouldUseDInput8Proxy(HMODULE hModule)
+{
+    #if VRL_PROXY_ONLY_IF_NAMED_DINPUT8
+    return IsCurrentModuleNamedDInput8(hModule);
+    #else
+    UNREFERENCED_PARAMETER(hModule);
+    return true;
+    #endif
+}
+
+/* Builds the full path to the real system dinput8.dll. Parameters: outPath = destination buffer, outCount = number of wchar_t entries. */
+static bool BuildSystemDInput8Path(wchar_t* outPath, size_t outCount)
+{
+    if (!outPath || outCount == 0)
+        return false;
+
+    wchar_t systemDir[MAX_PATH] = {};
+    UINT len = GetSystemDirectoryW(systemDir, MAX_PATH);
+    if (len == 0 || len >= MAX_PATH)
+        return false;
+
+    if (wcscpy_s(outPath, outCount, systemDir) != 0)
+        return false;
+
+    if (wcscat_s(outPath, outCount, L"\\dinput8.dll") != 0)
+        return false;
+
+    return true;
+}
+
+/* Resolves all needed real dinput8 exports. Parameters: none. */
+static bool ResolveRealDInput8Exports()
+{
+    if (!gRealDInput8)
+        return false;
+
+    gRealDirectInput8Create =
+        reinterpret_cast<DirectInput8Create_t>(GetProcAddress(gRealDInput8, "DirectInput8Create"));
+    gRealDllCanUnloadNow =
+        reinterpret_cast<DllCanUnloadNow_t>(GetProcAddress(gRealDInput8, "DllCanUnloadNow"));
+    gRealDllGetClassObject =
+        reinterpret_cast<DllGetClassObject_t>(GetProcAddress(gRealDInput8, "DllGetClassObject"));
+    gRealDllRegisterServer =
+        reinterpret_cast<DllRegisterServer_t>(GetProcAddress(gRealDInput8, "DllRegisterServer"));
+    gRealDllUnregisterServer =
+        reinterpret_cast<DllUnregisterServer_t>(GetProcAddress(gRealDInput8, "DllUnregisterServer"));
+    gRealGetdfDIJoystick =
+        reinterpret_cast<GetdfDIJoystick_t>(GetProcAddress(gRealDInput8, "GetdfDIJoystick"));
+
+    if (!gRealDirectInput8Create)
+        return false;
+
+    return true;
+}
+
+/* Loads the real system dinput8.dll. Parameters: hModule = current DLL module. */
+static bool LoadRealDInput8IfNeeded(HMODULE hModule)
+{
+    if (!ShouldUseDInput8Proxy(hModule))
+        return true;
+
+    if (gRealDInput8)
+        return true;
+
+    wchar_t realPath[MAX_PATH] = {};
+    if (!BuildSystemDInput8Path(realPath, _countof(realPath)))
+    {
+        Log("[DLL] Failed to build system dinput8 path.\n");
+        return false;
+    }
+
+    gRealDInput8 = LoadLibraryW(realPath);
+    if (!gRealDInput8)
+    {
+        Log("[DLL] Failed to load real dinput8.dll.\n");
+        return false;
+    }
+
+    if (!ResolveRealDInput8Exports())
+    {
+        Log("[DLL] Failed to resolve real dinput8 exports.\n");
+        FreeLibrary(gRealDInput8);
+        gRealDInput8 = nullptr;
+        return false;
+    }
+
+    Log("[DLL] Real dinput8.dll loaded.\n");
+    return true;
+}
+
+/* Frees the real system dinput8.dll. Parameters: none. */
+static void FreeRealDInput8()
+{
+    if (gRealDInput8)
+    {
+        FreeLibrary(gRealDInput8);
+        gRealDInput8 = nullptr;
+    }
+
+    gRealDirectInput8Create = nullptr;
+    gRealDllCanUnloadNow = nullptr;
+    gRealDllGetClassObject = nullptr;
+    gRealDllRegisterServer = nullptr;
+    gRealDllUnregisterServer = nullptr;
+    gRealGetdfDIJoystick = nullptr;
+}
+
+extern "C" HRESULT WINAPI ProxyDirectInput8Create(HINSTANCE hinst, DWORD dwVersion, REFIID riidltf, LPVOID* ppvOut, LPUNKNOWN punkOuter)
+{
+    if (!gRealDirectInput8Create)
+        return E_FAIL;
+
+    return gRealDirectInput8Create(hinst, dwVersion, riidltf, ppvOut, punkOuter);
+}
+
+extern "C" HRESULT STDAPICALLTYPE ProxyDllCanUnloadNow(void)
+{
+    if (!gRealDllCanUnloadNow)
+        return S_FALSE;
+
+    return gRealDllCanUnloadNow();
+}
+
+extern "C" HRESULT STDAPICALLTYPE ProxyDllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID* ppv)
+{
+    if (!gRealDllGetClassObject)
+        return CLASS_E_CLASSNOTAVAILABLE;
+
+    return gRealDllGetClassObject(rclsid, riid, ppv);
+}
+
+extern "C" HRESULT STDAPICALLTYPE ProxyDllRegisterServer(void)
+{
+    if (!gRealDllRegisterServer)
+        return E_FAIL;
+
+    return gRealDllRegisterServer();
+}
+
+extern "C" HRESULT STDAPICALLTYPE ProxyDllUnregisterServer(void)
+{
+    if (!gRealDllUnregisterServer)
+        return E_FAIL;
+
+    return gRealDllUnregisterServer();
+}
+
+extern "C" const void* WINAPI ProxyGetdfDIJoystick(void)
+{
+    if (!gRealGetdfDIJoystick)
+        return nullptr;
+
+    return gRealGetdfDIJoystick();
+}
+
+#endif
+
+/* Installs all enabled hooks. Parameters: hGame = main game module. */
 static void InstallAll(HMODULE hGame)
 {
     if (!Install_SetLuaFunctions_Hook())
@@ -218,9 +426,6 @@ static void InstallAll(HMODULE hGame)
     if (!InstallLoadoutPanelInfoRefreshLoadoutTextArabicHook(hGame))
         Log("[DLL] Failed to install InstallLoadoutPanelInfoRefreshLoadoutTextArabicHook hook.\n");
 
-    if (!InstallTipsLayoutControllerSetPageTextHook(hGame))
-        Log("[DLL] Failed to install InstallTipsLayoutControllerSetPageTextHook hook.\n");
-
     if (!InstallItemSelectorRecordCallFuncUpdateRecordsArabicHook(hGame))
         Log("[DLL] Failed to install InstallItemSelectorRecordCallFuncUpdateRecordsArabicHook hook.\n");
 
@@ -253,10 +458,9 @@ static void InstallAll(HMODULE hGame)
 
     if (!InstallMbDvcSideOpsCallbackImplUpdateInformationTextBoxArabicHook(hGame))
         Log("[DLL] Failed to install InstallMbDvcSideOpsCallbackImplUpdateInformationTextBoxArabicHook hook.\n");
-
 }
 
-
+/* Removes all enabled hooks. Parameters: none. */
 static void RemoveAll()
 {
     Uninstall_SetLuaFunctions_Hook();
@@ -288,7 +492,6 @@ static void RemoveAll()
     RemoveEquipDetailsCallbackImplCreateBulletDifferenceTextArabicHook();
     RemoveTppUIInfoTypingTextImplSetTypingTextArabicHook();
     RemoveLoadoutPanelInfoRefreshLoadoutTextArabicHook();
-    RemoveTipsLayoutControllerSetPageTextHook();
     RemoveItemSelectorRecordCallFuncUpdateRecordsArabicHook();
     RemoveMbDvcSideOpsCallbackImplShowCompleteRatioArabicTextHook();
     RemoveTppUICountAnnounceImplSetAnnounceTextArabicHook();
@@ -302,6 +505,23 @@ static void RemoveAll()
     RemoveMbDvcSideOpsCallbackImplUpdateInformationTextBoxArabicHook();
 }
 
+// Opens the debug console only in Debug builds.
+static void OpenDebugConsoleIfNeeded()
+{
+    #ifdef _DEBUG
+    if (GetConsoleWindow() == nullptr)
+    {
+        AllocConsole();
+        FILE* dummy = nullptr;
+        freopen_s(&dummy, "CONOUT$", "w", stdout);
+        freopen_s(&dummy, "CONOUT$", "w", stderr);
+        freopen_s(&dummy, "CONIN$", "r", stdin);
+    }
+    #endif
+}
+
+
+/* Initializes hooks once. Parameters: hGame = main game module handle. */
 extern "C" __declspec(dllexport) bool InitializeHooks(HMODULE hGame)
 {
     if (gInitialized.load())
@@ -309,8 +529,8 @@ extern "C" __declspec(dllexport) bool InitializeHooks(HMODULE hGame)
 
     if (!hGame)
         return false;
-    #if _DEBUG
 
+    #if _DEBUG
     InitLog();
     #endif // _DEBUG
 
@@ -338,6 +558,7 @@ extern "C" __declspec(dllexport) bool InitializeHooks(HMODULE hGame)
     return true;
 }
 
+/* Shuts everything down once. Parameters: none. */
 extern "C" __declspec(dllexport) void ShutdownHooks()
 {
     if (!gInitialized.load())
@@ -349,10 +570,13 @@ extern "C" __declspec(dllexport) void ShutdownHooks()
     MH_Uninitialize();
 
     gInitialized.store(false);
+    gInitStarted.store(false);
+
     Log("[VRL] ShutdownHooks done.\n");
     CloseLog();
 }
 
+/* Worker thread for startup. Parameters: unused. */
 static DWORD WINAPI InitThread(LPVOID)
 {
     HMODULE hGame = GetModuleHandleW(nullptr);
@@ -367,7 +591,14 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved)
     case DLL_PROCESS_ATTACH:
     {
         DisableThreadLibraryCalls(hModule);
+        InitLog();
 
+        #if VRL_ENABLE_DINPUT8_PROXY
+        if (!LoadRealDInput8IfNeeded(hModule))
+            return FALSE;
+        #endif
+
+        #if VRL_ENABLE_AUTO_INIT_THREAD
         bool expected = false;
         if (!gInitStarted.compare_exchange_strong(expected, true))
             return TRUE;
@@ -375,6 +606,9 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved)
         HANDLE hThread = CreateThread(nullptr, 0, InitThread, nullptr, 0, nullptr);
         if (hThread)
             CloseHandle(hThread);
+        #else
+        InitializeHooks(GetModuleHandleW(nullptr));
+        #endif
 
         return TRUE;
     }
@@ -383,6 +617,10 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved)
     {
         if (lpReserved == nullptr)
             ShutdownHooks();
+
+        #if VRL_ENABLE_DINPUT8_PROXY
+        FreeRealDInput8();
+        #endif
 
         return TRUE;
     }
