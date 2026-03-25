@@ -121,7 +121,7 @@ static void PushLuaNumber(lua_State* L, float value)
     g_lua_pushnumber(L, static_cast<lua_Number>(value));
 }
 
-static luaL_Reg g_HookSample[] =
+static luaL_Reg g_V_Restored_Languages[] =
 {   //SetDefaultEquipBgTexturePath is the one that is going to be used in lua.
     //{ "SetDefaultEquipBgTexturePath",               l_SetDefaultEquipBgTexturePath },
 
@@ -137,7 +137,7 @@ static void RegisterAllUiLuaLibraries(lua_State* L)
     if (g_RegisteredLuaStates.find(L) != g_RegisteredLuaStates.end())
         return;
 
-    RegisterLuaLibrary(L, "V_Restored_Languages", g_HookSample);
+    RegisterLuaLibrary(L, "V_Restored_Languages", g_V_Restored_Languages);
     g_RegisteredLuaStates.insert(L);
 }// Registers V_Restored_Languages into a UI Lua state only once.
 
@@ -150,9 +150,9 @@ static void __fastcall hkSetLuaFunctions(lua_State* L)
 }
 
 // Exported Lua loader for require("V_Restored_Languages").
-extern "C" __declspec(dllexport) int __cdecl luaopen_HookSample(lua_State* L)
+extern "C" __declspec(dllexport) int __cdecl luaopen_V_Restored_Languages(lua_State* L)
 {
-    return RegisterLuaLibrary(L, "V_Restored_Languages", g_HookSample) ? 1 : 0;
+    return RegisterLuaLibrary(L, "V_Restored_Languages", g_V_Restored_Languages) ? 1 : 0;
 }
 
 // Installs the SetLuaFunctions hook.

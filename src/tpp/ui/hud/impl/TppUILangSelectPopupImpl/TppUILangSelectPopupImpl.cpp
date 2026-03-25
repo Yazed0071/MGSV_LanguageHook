@@ -1,34 +1,3 @@
-// LangSelectPopup_FakeScrollPrevAndNext_WithPopupScopedApplyRescue.cpp
-//
-// Clean fake-scroll language-popup hook + popup-scoped ApplyFormVariation rescue.
-//
-// Behavior:
-// - Keeps the game's real 9 physical popup rows unchanged
-// - Uses fake-scroll paging only in FULL mode when total languages > 8
-// - 4-row and 2-row popup modes stay stock
-// - Page 1:
-//     - up to 8 real languages
-//     - row 9 is fake NEXT
-// - Page 2+:
-//     - row 1 is fake PREV
-//     - middle pages: 7 real languages + fake NEXT at row 9
-//     - last page: fake PREV + up to 8 real languages
-// - Fake NEXT triggers immediately when highlighted
-// - Fake PREV triggers immediately when highlighted
-// - Fake NEXT semantic position:
-//     outX = 0.5f; outY = 0.375f;
-// - Fake PREV semantic position:
-//     outX = 0.0f; outY = 0.0f;
-// - Confirm only commits real language rows
-// - When the extended popup appears, ApplyFormVariation rescue is armed
-// - First rescued null-this call starts a 10-second keepalive worker thread
-// - Repeated null-this ApplyFormVariation calls are rescued during that window
-// - After 10 seconds from the first null fix, the rescue hook detaches
-//
-// Notes:
-// - This is still a workaround for the null-this crash path
-// - No startup install call for ApplyFormVariation rescue is needed
-
 #include <windows.h>
 #include <cstdint>
 #include <cstddef>
@@ -77,56 +46,17 @@ static const std::vector<uint32_t> kExtraLangIds =
     10
 };
 
-// ------------------------------------------------------------
-// Hook typedefs
-// ------------------------------------------------------------
-
-// Function:
-// - Original popup setup function.
-// Params:
-// - thisPtr: popup instance
-// Returns:
-// - none
 using SetSelectLangList_t = void(__fastcall*)(void* thisPtr);
 
-// Function:
-// - Original popup update function.
-// Params:
-// - thisPtr: popup instance
-// Returns:
-// - none
+
 using UpdateLangList_t = void(__fastcall*)(void* thisPtr);
 
-// Function:
-// - Original popup confirm function.
-// Params:
-// - thisPtr: popup instance
-// Returns:
-// - none
 using DecideLangList_t = void(__fastcall*)(void* thisPtr);
 
-// Function:
-// - Original popup state-machine update function.
-// Params:
-// - thisPtr: popup instance
-// Returns:
-// - none
 using UpdateLangPopup_t = void(__fastcall*)(void* thisPtr);
 
-// Function:
-// - Original committed language change function.
-// Params:
-// - langId: committed language id
-// Returns:
-// - none
 using ChangeLanguage_t = void(__fastcall*)(uint32_t langId);
 
-// Function:
-// - Original ApplyFormVariation function used by the rescue hook.
-// Params:
-// - standard engine ApplyFormVariation arguments
-// Returns:
-// - engine result
 using ApplyFormVariation_t = bool(__fastcall*)(
     void* thisPtr,
     void* model,
@@ -140,16 +70,6 @@ using ApplyFormVariation_t = bool(__fastcall*)(
     bool      resetObjects
     );
 
-// ------------------------------------------------------------
-// Forward declarations
-// ------------------------------------------------------------
-
-// Function:
-// - Detour for ApplyFormVariation that rescues null-this calls.
-// Params:
-// - standard ApplyFormVariation args
-// Returns:
-// - ApplyFormVariation result, or false when rescue cannot be done
 static bool __fastcall hkApplyFormVariation(
     void* thisPtr,
     void* model,
@@ -162,25 +82,9 @@ static bool __fastcall hkApplyFormVariation(
     bool      doReset,
     bool      resetObjects);
 
-// Function:
-// - Timeout worker that disables the rescue hook after the keepalive window.
-// Params:
-// - param: session token packed into LPVOID
-// Returns:
-// - thread exit code
 static DWORD WINAPI ApplyRescueTimeoutThread(LPVOID param);
 
-// Function:
-// - Starts the one-shot timeout worker after the first rescued null.
-// Params:
-// - none
-// Returns:
-// - none
 static void StartApplyRescueTimeoutThread();
-
-// ------------------------------------------------------------
-// Original trampolines
-// ------------------------------------------------------------
 
 static SetSelectLangList_t  oSetSelectLangList = nullptr;
 static UpdateLangList_t     oUpdateLangList = nullptr;
@@ -189,10 +93,6 @@ static UpdateLangPopup_t    oUpdateLangPopup = nullptr;
 static ChangeLanguage_t     oChangeLanguage = nullptr;
 static ApplyFormVariation_t oApplyFormVariation = nullptr;
 
-// ------------------------------------------------------------
-// Target pointers
-// ------------------------------------------------------------
-
 static void* gTargetSetSelectLangList = nullptr;
 static void* gTargetUpdateLangList = nullptr;
 static void* gTargetDecideLangList = nullptr;
@@ -200,53 +100,20 @@ static void* gTargetUpdateLangPopup = nullptr;
 static void* gTargetChangeLanguage = nullptr;
 static void* gTargetApplyFormVariation = nullptr;
 
-// ------------------------------------------------------------
-// Shared state
-// ------------------------------------------------------------
-
 static thread_local bool gInOriginalSetSelectLangList = false;
 static bool gPopupHooksRemovedAfterSelection = false;
 
-// ------------------------------------------------------------
-// Per-popup page state
-// ------------------------------------------------------------
-
-// Function:
-// - Stores the current logical page index for each popup instance.
-// Params:
-// - key: popup instance
-// Returns:
-// - none
 static std::unordered_map<void*, uint32_t> gCurrentPageByPopup;
 
-// ------------------------------------------------------------
-// ApplyFormVariation rescue state
-// ------------------------------------------------------------
-
-// Last non-null FormVariationFile2* seen while rescue is armed.
 static thread_local void* gLastGoodApplyFormVariationThis = nullptr;
 
-// Hook lifetime.
 static std::atomic_bool gApplyRescueHookCreated{ false };
 static std::atomic_bool gApplyRescueHookEnabled{ false };
 
-// Session state:
-// - armed when extended popup appears
-// - first rescued null starts the worker timer
 static std::atomic_bool     gApplyRescueSessionActive{ false };
 static std::atomic_bool     gApplyRescueTimerStarted{ false };
 static std::atomic_uint64_t gApplyRescueSessionToken{ 0 };
 
-// ------------------------------------------------------------
-// Small helper structs
-// ------------------------------------------------------------
-
-// Function:
-// - References one physical popup row block.
-// Params:
-// - none
-// Returns:
-// - none
 struct PopupRowRef
 {
     uint64_t enableHandle;
@@ -385,15 +252,6 @@ static PopupMode GetPopupMode(void* thisPtr)
     return PopupMode::Full8;
 }
 
-// ------------------------------------------------------------
-// Function: GetUiObject
-// Returns the same UI object the game uses: *(*(this+0x40)+0x20).
-// Params:
-// - thisPtr: popup instance
-// Returns:
-// - UI object pointer or nullptr
-// ------------------------------------------------------------
-
 static void* GetUiObject(void* thisPtr)
 {
     auto* base = reinterpret_cast<uint8_t*>(thisPtr);
@@ -404,16 +262,6 @@ static void* GetUiObject(void* thisPtr)
 
     return *reinterpret_cast<void**>(reinterpret_cast<uint8_t*>(owner) + 0x20);
 }
-
-// ------------------------------------------------------------
-// Function: GetPopupRowRef
-// Returns the handles for one physical popup row block.
-// Params:
-// - thisPtr: popup instance
-// - rowIndex: physical row index 0..8
-// Returns:
-// - PopupRowRef for that row
-// ------------------------------------------------------------
 
 static PopupRowRef GetPopupRowRef(void* thisPtr, int rowIndex)
 {
@@ -428,15 +276,6 @@ static PopupRowRef GetPopupRowRef(void* thisPtr, int rowIndex)
     return row;
 }
 
-// ------------------------------------------------------------
-// Function: MakeUiFloatParam
-// Builds the aligned temp used by the game's layout float setter.
-// Params:
-// - value: float value to place into x
-// Returns:
-// - UiFloatParam temp
-// ------------------------------------------------------------
-
 static UiFloatParam MakeUiFloatParam(float value)
 {
     UiFloatParam out{};
@@ -446,15 +285,6 @@ static UiFloatParam MakeUiFloatParam(float value)
     out.w = 0.0f;
     return out;
 }
-
-// ------------------------------------------------------------
-// Function: UiCall_2B0_SetRowVisible
-// Calls the game's row visibility setter at vtable +0x2B0.
-// Params:
-// - uiObj: popup UI object
-// - handle: row enable handle
-// - visible: 0 or 1
-// ------------------------------------------------------------
 
 static void UiCall_2B0_SetRowVisible(void* uiObj, uint64_t handle, int visible)
 {
@@ -466,16 +296,6 @@ static void UiCall_2B0_SetRowVisible(void* uiObj, uint64_t handle, int visible)
     if (fn)
         fn(uiObj, handle, visible);
 }
-
-// ------------------------------------------------------------
-// Function: UiCall_590_SetLayoutFloat
-// Calls the game's layout float setter at vtable +0x590.
-// Params:
-// - uiObj: popup UI object
-// - layoutHandle: row layout handle
-// - propHash: layout property hash
-// - value: float value to set
-// ------------------------------------------------------------
 
 static void UiCall_590_SetLayoutFloat(void* uiObj, uint64_t layoutHandle, uint64_t propHash, float value)
 {
@@ -491,14 +311,6 @@ static void UiCall_590_SetLayoutFloat(void* uiObj, uint64_t layoutHandle, uint64
     fn(uiObj, layoutHandle, propHash, &temp);
 }
 
-// ------------------------------------------------------------
-// Function: UiCall_6B0
-// Calls the game's highlight visual setter at vtable +0x6B0.
-// Params:
-// - uiObj: popup UI object
-// - handle: selected/highlight handle
-// ------------------------------------------------------------
-
 static void UiCall_6B0(void* uiObj, uint64_t handle)
 {
     if (!uiObj || !handle)
@@ -510,14 +322,6 @@ static void UiCall_6B0(void* uiObj, uint64_t handle)
         fn(uiObj, handle);
 }
 
-// ------------------------------------------------------------
-// Function: UiCall_678
-// Calls the game's normal/unselected visual setter at vtable +0x678.
-// Params:
-// - uiObj: popup UI object
-// - handle: normal or entry handle
-// ------------------------------------------------------------
-
 static void UiCall_678(void* uiObj, uint64_t handle)
 {
     if (!uiObj || !handle)
@@ -528,16 +332,6 @@ static void UiCall_678(void* uiObj, uint64_t handle)
     if (fn)
         fn(uiObj, handle);
 }
-
-// ------------------------------------------------------------
-// Function: BuildLanguagePool
-// Builds the logical full-mode language pool in display order.
-// Duplicates are removed while preserving order.
-// Params:
-// - none
-// Returns:
-// - logical language pool
-// ------------------------------------------------------------
 
 static std::vector<uint32_t> BuildLanguagePool()
 {
@@ -556,15 +350,6 @@ static std::vector<uint32_t> BuildLanguagePool()
     return out;
 }
 
-// ------------------------------------------------------------
-// Function: IsFakeScrollFullMode
-// Returns true only when the popup is FULL mode and needs fake-scroll paging.
-// Params:
-// - thisPtr: popup instance
-// Returns:
-// - true if custom fake-scroll paging should be used
-// ------------------------------------------------------------
-
 static bool IsFakeScrollFullMode(void* thisPtr)
 {
     if (!thisPtr)
@@ -577,31 +362,10 @@ static bool IsFakeScrollFullMode(void* thisPtr)
     return pool.size() > 8;
 }
 
-// ------------------------------------------------------------
-// Function: GetCurrentPageRef
-// Returns the stored logical page index for one popup instance.
-// Params:
-// - thisPtr: popup instance
-// Returns:
-// - reference to current page index
-// ------------------------------------------------------------
-
 static uint32_t& GetCurrentPageRef(void* thisPtr)
 {
     return gCurrentPageByPopup[thisPtr];
 }
-
-// ------------------------------------------------------------
-// Function: BuildPageStarts
-// Builds logical page starts.
-// Layout capacity:
-// - page 0: 8 real languages if another page exists
-// - page 1+: 7 real languages on middle pages, 8 on the last page
-// Params:
-// - totalLangs: total language count
-// Returns:
-// - page start offsets
-// ------------------------------------------------------------
 
 static std::vector<uint32_t> BuildPageStarts(uint32_t totalLangs)
 {
@@ -627,16 +391,6 @@ static std::vector<uint32_t> BuildPageStarts(uint32_t totalLangs)
     return starts;
 }
 
-// ------------------------------------------------------------
-// Function: ClampPageIndex
-// Clamps a logical page index to the valid page range.
-// Params:
-// - pageIndex: requested page index
-// - starts: page-start table
-// Returns:
-// - clamped page index
-// ------------------------------------------------------------
-
 static uint32_t ClampPageIndex(uint32_t pageIndex, const std::vector<uint32_t>& starts)
 {
     if (starts.empty())
@@ -647,17 +401,6 @@ static uint32_t ClampPageIndex(uint32_t pageIndex, const std::vector<uint32_t>& 
 
     return pageIndex;
 }
-
-// ------------------------------------------------------------
-// Function: GetLangDisplayPosition
-// Returns the semantic display position for a real language id.
-// Params:
-// - langId: game language id
-// - outX: receives X
-// - outY: receives Y
-// Returns:
-// - true if mapped
-// ------------------------------------------------------------
 
 static bool GetLangDisplayPosition(uint32_t langId, float& outX, float& outY)
 {
@@ -683,17 +426,6 @@ static bool GetLangDisplayPosition(uint32_t langId, float& outX, float& outY)
     return false;
 }
 
-// ------------------------------------------------------------
-// Function: GetControlDisplayPosition
-// Returns the display position for one fake control row.
-// Params:
-// - kind: control type
-// - outX: receives X
-// - outY: receives Y
-// Returns:
-// - true if mapped
-// ------------------------------------------------------------
-
 static bool GetControlDisplayPosition(PageItemKind kind, float& outX, float& outY)
 {
     switch (kind)
@@ -717,17 +449,6 @@ static bool GetControlDisplayPosition(PageItemKind kind, float& outX, float& out
     return false;
 }
 
-// ------------------------------------------------------------
-// Function: GetPageItemDisplayPosition
-// Returns the display position for one page item.
-// Params:
-// - item: logical page item
-// - outX: receives X
-// - outY: receives Y
-// Returns:
-// - true if mapped
-// ------------------------------------------------------------
-
 static bool GetPageItemDisplayPosition(const PageItem& item, float& outX, float& outY)
 {
     if (item.kind == PageItemKind::Language)
@@ -735,19 +456,6 @@ static bool GetPageItemDisplayPosition(const PageItem& item, float& outX, float&
 
     return GetControlDisplayPosition(item.kind, outX, outY);
 }
-
-// ------------------------------------------------------------
-// Function: BuildPage
-// Builds one fake-scroll page.
-// Layout:
-// - page 0: 8 languages + next if there is another page
-// - page 1+: prev first, then real languages, then next if there is another page
-// Params:
-// - pageIndex: logical page index
-// - pool: language pool
-// Returns:
-// - PopupPage
-// ------------------------------------------------------------
 
 static PopupPage BuildPage(uint32_t pageIndex, const std::vector<uint32_t>& pool)
 {
@@ -815,15 +523,6 @@ static PopupPage BuildPage(uint32_t pageIndex, const std::vector<uint32_t>& pool
     return page;
 }
 
-// ------------------------------------------------------------
-// Function: FindFirstRealLanguageRow
-// Finds the first physical row index that holds a real language.
-// Params:
-// - page: built popup page
-// Returns:
-// - physical row index, or 0 if none found
-// ------------------------------------------------------------
-
 static uint32_t FindFirstRealLanguageRow(const PopupPage& page)
 {
     for (uint32_t i = 0; i < page.visibleCount; ++i)
@@ -834,15 +533,6 @@ static uint32_t FindFirstRealLanguageRow(const PopupPage& page)
 
     return 0;
 }
-
-// ------------------------------------------------------------
-// Function: FindLastRealLanguageRow
-// Finds the last physical row index that holds a real language.
-// Params:
-// - page: built popup page
-// Returns:
-// - physical row index, or 0 if none found
-// ------------------------------------------------------------
 
 static uint32_t FindLastRealLanguageRow(const PopupPage& page)
 {
@@ -857,16 +547,6 @@ static uint32_t FindLastRealLanguageRow(const PopupPage& page)
 
     return 0;
 }
-
-// ------------------------------------------------------------
-// Function: ClampCurrentSelection
-// Clamps this+0xA4 to the current visible row range.
-// Params:
-// - thisPtr: popup instance
-// - visibleCount: visible row count
-// Returns:
-// - clamped selected physical index
-// ------------------------------------------------------------
 
 static uint32_t ClampCurrentSelection(void* thisPtr, uint32_t visibleCount)
 {
@@ -883,16 +563,6 @@ static uint32_t ClampCurrentSelection(void* thisPtr, uint32_t visibleCount)
     return currentIndex;
 }
 
-// ------------------------------------------------------------
-// Function: SetSelectionIndex
-// Sets current selection index in both popup state and list widget.
-// Params:
-// - thisPtr: popup instance
-// - newIndex: new selected physical row index
-// Returns:
-// - none
-// ------------------------------------------------------------
-
 static void SetSelectionIndex(void* thisPtr, uint32_t newIndex)
 {
     auto* base = reinterpret_cast<uint8_t*>(thisPtr);
@@ -906,30 +576,11 @@ static void SetSelectionIndex(void* thisPtr, uint32_t newIndex)
         *reinterpret_cast<uint32_t*>(listObj + 0x18) = newIndex;
 }
 
-// ------------------------------------------------------------
-// Function: ClearCommittedEntryHandle
-// Clears the popup's chosen row entry handle at this+0x98.
-// Params:
-// - thisPtr: popup instance
-// Returns:
-// - none
-// ------------------------------------------------------------
-
 static void ClearCommittedEntryHandle(void* thisPtr)
 {
     auto* base = reinterpret_cast<uint8_t*>(thisPtr);
     *reinterpret_cast<uint64_t*>(base + 0x98) = 0;
 }
-
-// ------------------------------------------------------------
-// Function: SyncListWidgetState
-// Updates the list widget object at this+0x48 with count/index state.
-// Params:
-// - thisPtr: popup instance
-// - visibleCount: visible row count
-// Returns:
-// - none
-// ------------------------------------------------------------
 
 static void SyncListWidgetState(void* thisPtr, uint32_t visibleCount)
 {
@@ -946,17 +597,6 @@ static void SyncListWidgetState(void* thisPtr, uint32_t visibleCount)
     *reinterpret_cast<uint32_t*>(listObj + 0x08) |= 0x02;
 }
 
-// ------------------------------------------------------------
-// Function: ApplyPageItemLayout
-// Applies the semantic X/Y layout for one page item into one physical row.
-// Params:
-// - thisPtr: popup instance
-// - physicalRowIndex: physical row slot 0..8
-// - item: logical page item shown in that slot
-// Returns:
-// - none
-// ------------------------------------------------------------
-
 static void ApplyPageItemLayout(void* thisPtr, int physicalRowIndex, const PageItem& item)
 {
     void* uiObj = GetUiObject(thisPtr);
@@ -972,15 +612,6 @@ static void ApplyPageItemLayout(void* thisPtr, int physicalRowIndex, const PageI
     UiCall_590_SetLayoutFloat(uiObj, row.layoutHandle, HASH_TRANSLATE_X, x);
     UiCall_590_SetLayoutFloat(uiObj, row.layoutHandle, HASH_TRANSLATE_Y, y);
 }
-
-// ------------------------------------------------------------
-// Function: RenderCurrentPage
-// Renders the current fake-scroll page into the 9 real popup rows.
-// Params:
-// - thisPtr: popup instance
-// Returns:
-// - built PopupPage
-// ------------------------------------------------------------
 
 static PopupPage RenderCurrentPage(void* thisPtr)
 {
@@ -1019,16 +650,6 @@ static PopupPage RenderCurrentPage(void* thisPtr)
     return page;
 }
 
-// ------------------------------------------------------------
-// Function: ApplyCurrentPageSelectionVisuals
-// Updates selection visuals and writes this+0xAC only for real language rows.
-// Params:
-// - thisPtr: popup instance
-// Returns:
-// - true if handled by fake-scroll paging
-// - false if caller should use stock logic
-// ------------------------------------------------------------
-
 static bool ApplyCurrentPageSelectionVisuals(void* thisPtr)
 {
     if (!IsFakeScrollFullMode(thisPtr))
@@ -1066,17 +687,6 @@ static bool ApplyCurrentPageSelectionVisuals(void* thisPtr)
     return true;
 }
 
-// ------------------------------------------------------------
-// Function: CommitSelectedLanguageRow
-// Commits a real language row by writing this+0x98 from the selected
-// physical row's entry handle and refreshing that handle once.
-// Params:
-// - thisPtr: popup instance
-// - selectedPhysicalIndex: selected physical row index
-// Returns:
-// - none
-// ------------------------------------------------------------
-
 static void CommitSelectedLanguageRow(void* thisPtr, uint32_t selectedPhysicalIndex)
 {
     auto* base = reinterpret_cast<uint8_t*>(thisPtr);
@@ -1090,16 +700,6 @@ static void CommitSelectedLanguageRow(void* thisPtr, uint32_t selectedPhysicalIn
         UiCall_678(uiObj, row.entryHandle);
     }
 }
-
-// ------------------------------------------------------------
-// Function: AutoRetreatFakeScrollOnHighlight
-// If fake PREV is highlighted, immediately moves to the previous page.
-// Selection lands on the last real language row of that previous page.
-// Params:
-// - thisPtr: popup instance
-// Returns:
-// - true if page switched backward
-// ------------------------------------------------------------
 
 static bool AutoRetreatFakeScrollOnHighlight(void* thisPtr)
 {
@@ -1146,16 +746,6 @@ static bool AutoRetreatFakeScrollOnHighlight(void* thisPtr)
     return true;
 }
 
-// ------------------------------------------------------------
-// Function: AutoAdvanceFakeScrollOnHighlight
-// If fake NEXT is highlighted, immediately moves to the next page.
-// Selection lands on the first real language row of that next page.
-// Params:
-// - thisPtr: popup instance
-// Returns:
-// - true if page switched forward
-// ------------------------------------------------------------
-
 static bool AutoAdvanceFakeScrollOnHighlight(void* thisPtr)
 {
     if (!IsFakeScrollFullMode(thisPtr))
@@ -1201,18 +791,6 @@ static bool AutoAdvanceFakeScrollOnHighlight(void* thisPtr)
     return true;
 }
 
-// ------------------------------------------------------------
-// Function: HandleFakeScrollConfirm
-// Confirms only real language rows.
-// If a fake control is selected, do nothing because page movement already
-// happens on highlight.
-// Params:
-// - thisPtr: popup instance
-// Returns:
-// - true if handled by fake-scroll paging
-// - false if caller should use stock logic
-// ------------------------------------------------------------
-
 static bool HandleFakeScrollConfirm(void* thisPtr)
 {
     if (!IsFakeScrollFullMode(thisPtr))
@@ -1241,32 +819,11 @@ static bool HandleFakeScrollConfirm(void* thisPtr)
     return true;
 }
 
-// ------------------------------------------------------------
-// Function: IsRealConfiguredLanguageId
-// Returns true only for configured language ids in the logical pool.
-// Params:
-// - langId: language id passed to ChangeLanguage
-// Returns:
-// - true if it is a real configured language id
-// ------------------------------------------------------------
-
 static bool IsRealConfiguredLanguageId(uint32_t langId)
 {
     const std::vector<uint32_t> pool = BuildLanguagePool();
     return std::find(pool.begin(), pool.end(), langId) != pool.end();
 }
-
-// ------------------------------------------------------------
-// Function: CreateAndEnableHook
-// Creates and enables one MinHook hook.
-// Params:
-// - target: target function address
-// - detour: detour function
-// - original: receives trampoline
-// - name: debug label
-// Returns:
-// - true on success
-// ------------------------------------------------------------
 
 static bool CreateAndEnableHook(void* target, void* detour, void** original, const char* name)
 {
@@ -1288,15 +845,6 @@ static bool CreateAndEnableHook(void* target, void* detour, void** original, con
     return true;
 }
 
-// ------------------------------------------------------------
-// Function: DisableApplyFormVariationRescueHook
-// Disables rescue after the timeout worker expires.
-// Params:
-// - none
-// Returns:
-// - none
-// ------------------------------------------------------------
-
 static void DisableApplyFormVariationRescueHook()
 {
     gApplyRescueSessionActive.store(false);
@@ -1316,16 +864,6 @@ static void DisableApplyFormVariationRescueHook()
     gApplyRescueHookEnabled.store(false);
     Log("[ApplyRescue_FAKE_SCROLL] Hook disabled after timeout.\n");
 }
-
-// ------------------------------------------------------------
-// Function: ApplyRescueTimeoutThread
-// Waits 10 seconds, then disables the rescue hook only if the same
-// popup session is still the active one.
-// Params:
-// - param: session token packed into LPVOID
-// Returns:
-// - thread exit code
-// ------------------------------------------------------------
 
 static DWORD WINAPI ApplyRescueTimeoutThread(LPVOID param)
 {
@@ -1348,15 +886,6 @@ static DWORD WINAPI ApplyRescueTimeoutThread(LPVOID param)
 
     return 0;
 }
-
-// ------------------------------------------------------------
-// Function: StartApplyRescueTimeoutThread
-// Starts the one-shot 10-second timer after the first rescued null.
-// Params:
-// - none
-// Returns:
-// - none
-// ------------------------------------------------------------
 
 static void StartApplyRescueTimeoutThread()
 {
@@ -1386,18 +915,6 @@ static void StartApplyRescueTimeoutThread()
         Log("[ApplyRescue_FAKE_SCROLL] Failed to start timeout thread.\n");
     }
 }
-
-// ------------------------------------------------------------
-// Function: PrepareApplyFormVariationRescueHook
-// Creates the rescue hook once. Does not enable it yet.
-// Params:
-// - none
-// Returns:
-// - true on success
-// ------------------------------------------------------------
-
-
-
 
 static bool PrepareApplyFormVariationRescueHook()
 {
@@ -1434,15 +951,6 @@ static bool PrepareApplyFormVariationRescueHook()
     return true;
 }
 
-// ------------------------------------------------------------
-// Function: EnableApplyFormVariationRescueHook
-// Extended popup appears -> rescue on.
-// Params:
-// - none
-// Returns:
-// - true on success
-// ------------------------------------------------------------
-
 static bool EnableApplyFormVariationRescueHook()
 {
     if (!PrepareApplyFormVariationRescueHook())
@@ -1474,15 +982,6 @@ static bool EnableApplyFormVariationRescueHook()
     return true;
 }
 
-// ------------------------------------------------------------
-// Function: RemoveApplyFormVariationRescueHookCompletely
-// Fully removes the rescue hook, for manual teardown only.
-// Params:
-// - none
-// Returns:
-// - none
-// ------------------------------------------------------------
-
 static void RemoveApplyFormVariationRescueHookCompletely()
 {
     DisableApplyFormVariationRescueHook();
@@ -1498,18 +997,6 @@ static void RemoveApplyFormVariationRescueHookCompletely()
 
     Log("[ApplyRescue_FAKE_SCROLL] Hook fully removed.\n");
 }
-
-// ------------------------------------------------------------
-// Function: hkApplyFormVariation
-// Extended popup appears -> armed
-// First null fix -> starts real 10-second timeout thread
-// More nulls during that window -> rescue
-// Timeout thread detaches hook even if no more calls happen
-// Params:
-// - standard ApplyFormVariation args
-// Returns:
-// - ApplyFormVariation result, or false if null rescue had no cache
-// ------------------------------------------------------------
 
 static bool __fastcall hkApplyFormVariation(
     void* thisPtr,
@@ -1592,15 +1079,6 @@ static bool __fastcall hkApplyFormVariation(
     return false;
 }
 
-// ------------------------------------------------------------
-// Function: RemovePopupOnlyHooks
-// Removes only the popup-related hooks.
-// Params:
-// - none
-// Returns:
-// - none
-// ------------------------------------------------------------
-
 static void RemovePopupOnlyHooks()
 {
     if (gTargetSetSelectLangList)
@@ -1642,16 +1120,6 @@ static void RemovePopupOnlyHooks()
     Log("[LangSelectPopup] Popup-only hooks removed after real language selection.\n");
 }
 
-// ------------------------------------------------------------
-// Function: hkSetSelectLangList
-// Lets the original build stock state first, then replaces only FULL mode
-// with the fake-scroll page model.
-// Params:
-// - thisPtr: popup instance
-// Returns:
-// - none
-// ------------------------------------------------------------
-
 static void __fastcall hkSetSelectLangList(void* thisPtr)
 {
     if (!oSetSelectLangList)
@@ -1677,19 +1145,6 @@ static void __fastcall hkSetSelectLangList(void* thisPtr)
         static_cast<unsigned>(page.visibleCount),
         static_cast<unsigned>(BuildLanguagePool().size()));
 }
-
-// ------------------------------------------------------------
-// Function: hkUpdateLangList
-// Uses stock logic during original setup.
-// In fake-scroll full mode, lets stock process input first, then:
-// 1) updates visuals
-// 2) checks fake PREV on highlight
-// 3) checks fake NEXT on highlight
-// Params:
-// - thisPtr: popup instance
-// Returns:
-// - none
-// ------------------------------------------------------------
 
 static void __fastcall hkUpdateLangList(void* thisPtr)
 {
@@ -1718,17 +1173,6 @@ static void __fastcall hkUpdateLangList(void* thisPtr)
     AutoAdvanceFakeScrollOnHighlight(thisPtr);
 }
 
-// ------------------------------------------------------------
-// Function: hkDecideLangList
-// Confirms only real language rows in fake-scroll full mode.
-// Fake control rows do not confirm anything because page movement already
-// happens on highlight.
-// Params:
-// - thisPtr: popup instance
-// Returns:
-// - none
-// ------------------------------------------------------------
-
 static void __fastcall hkDecideLangList(void* thisPtr)
 {
     if (!oDecideLangList)
@@ -1740,16 +1184,6 @@ static void __fastcall hkDecideLangList(void* thisPtr)
     oDecideLangList(thisPtr);
 }
 
-// ------------------------------------------------------------
-// Function: hkUpdateLangPopup
-// Calls the original popup state machine, then reapplies custom visuals
-// for fake-scroll full mode.
-// Params:
-// - thisPtr: popup instance
-// Returns:
-// - none
-// ------------------------------------------------------------
-
 static void __fastcall hkUpdateLangPopup(void* thisPtr)
 {
     if (!oUpdateLangPopup)
@@ -1760,16 +1194,6 @@ static void __fastcall hkUpdateLangPopup(void* thisPtr)
     if (IsFakeScrollFullMode(thisPtr))
         ApplyCurrentPageSelectionVisuals(thisPtr);
 }
-
-// ------------------------------------------------------------
-// Function: hkChangeLanguage
-// Runs when the game actually commits a language change.
-// Removes popup hooks before the reload path continues if enabled.
-// Params:
-// - langId: committed real language id
-// Returns:
-// - none
-// ------------------------------------------------------------
 
 static void __fastcall hkChangeLanguage(uint32_t langId)
 {
@@ -1858,16 +1282,6 @@ bool InstallLangSelectPopupPagedRewriteHooks(HMODULE hGame)
     Log("[LangSelectPopup] Fake-scroll rewrite hooks installed.\n");
     return true;
 }
-
-// ------------------------------------------------------------
-// Function: RemoveLangSelectPopupPagedRewriteHooks
-// Removes all popup hooks and fully removes the rescue hook.
-// The exported name is kept unchanged so existing dllmain code can stay.
-// Params:
-// - none
-// Returns:
-// - none
-// ------------------------------------------------------------
 
 void RemoveLangSelectPopupPagedRewriteHooks()
 {

@@ -48,8 +48,53 @@ static const AddressSet kEnglish = {
     0x1400F21D0ull, // LuaToGlueString
     0x141A116B0ull, // lua_isstring
     0x141A11680ull, // lua_isnumber
-    0x141A12460ull  // lua_tonumber
+    0x141A12460ull, // lua_tonumber
 
+
+
+
+
+
+    //ARABIC
+    0x1408BF270ull, // SetDisplayText
+    0x14087ABD0ull, // SetMainText
+    0x141DC36B0ull, // CreateTextUnits
+    0x14A4C14F0ull, // SetupListElementWalkerGear
+    0x140884AE0ull, // SetupMenuText
+    0x145CB1770ull, // SetMenuInfoText
+    0x1460FD9C0ull, // SetMissionInfoTexts
+    0x14A902820ull, // SetCommandText
+    0x140884670ull, // SetPageText 
+    0x1409171D0ull, // SetTextForModelNodeText
+    0x1408A8DC0ull, // TelopStartTitleEvCallUpdate
+    0x145D05D19ull, // SetTextMissionTelopNameEpisodeSnprintfCall
+    0x14093E510ull, // CallLogView
+    0x1408B8CE0ull, // SetMarkerText
+    0x145C5DBE0ull, // GetTypingText
+    0x145C5FCD0ull, // SetMenuNameText
+    0x1409122D0ull, // GetLangText
+    0x140F33E20ull, // MbDvcMissionListRecordCallFuncStart
+    0x1419A47B0ull, // SecurityUpdateEventLogInfo
+    0x1419914F0ull, // SecurityGetEventLogTypingText
+    0x149476B10ull, // MbDvcSideOpsRecordCallFuncViewRecord
+    0x1416C1080ull, // MissionPreparationCallbackImpl_SetupMissionName
+    0x14A4D94F0ull, // EquipDetailsCallbackImpl_CreateCarryingDifferenceText
+    0x14A4D8E70ull, // EquipDetailsCallbackImpl_CreateBulletDifferenceText
+    0x141604540ull, // TppUIInfoTypingTextImpl_SetTypingText
+    0x14A5A9D90ull, // LoadoutPanelInfo_RefreshLoadoutText
+    0x1416AF270ull, // ItemSelectorRecordCallFunc_UpdateRecords
+    0x149473B60ull, // MbDvcSideOpsCallbackImpl_ShowCompleteRatio
+    0x14A3EAE70ull, // TppUICountAnnounceImpl_SetAnnounceText
+    0x145CCDC10ull, // LoadingTipsEv_GetTitleText
+    0x145CCFCC0ull, // LoadingTipsEv_UpdateActPhase
+    0x1408B14C0ull, // EquipCrossEvCall_SetCircleCursorFromSrickDir
+    0x140F33780ull, // MbDvcMissionListCallbackImpl_ShowMissionInfoTextBox
+    0x145CB9470ull, // GameOverEvCall_UpdateSelectText
+    0x1408979C0ull, // PopupEvCall_SettingPopup
+    0x145F236F0ull, // SetEquipBackgroundTexture
+    0x141DC78F0ull, // ModelNodeMesh_SetTextureName
+    0x149475810ull, // MbDvcSideOpsCallbackImpl_UpdateInformationTextBox
+    
 };
 
 static const AddressSet kJapanese = {
@@ -92,7 +137,51 @@ static const AddressSet kJapanese = {
     0x0ull, // LuaToGlueString
     0x0ull, // lua_isstring
     0x0ull, // lua_isnumber
-    0x0ull  // lua_tonumber
+    0x0ull, // lua_tonumber
+    0x0ull, // CreateTextUnits
+    
+
+
+
+
+    //ARABIC
+    0x0ull, // SetDisplayText
+    0x0ull, // SetMainText
+    0x0ull, // SetupListElementWalkerGear
+    0x0ull, // SetupMenuText
+    0x0ull, // SetMenuInfoText
+    0x0ull, // SetMissionInfoTexts
+    0x0ull, // SetCommandText
+    0x0ull, // SetPageText 
+    0x0ull, // SetTextForModelNodeText   
+    0x0ull, // TelopStartTitleEvCallUpdate
+    0x0ull, // SetTextMissionTelopNameEpisodeSnprintfCall
+    0x0ull, // CallLogView
+    0x0ull, // SetMarkerText
+    0x0ull, // GetTypingText
+    0x0ull, // SetMenuNameText
+    0x0ull, // GetLangText
+    0x0ull, // MbDvcMissionListRecordCallFuncStart
+    0x0ull, // SecurityUpdateEventLogInfo
+    0x0ull, // SecurityGetEventLogTypingText
+    0x0ull, // MbDvcSideOpsRecordCallFuncViewRecord
+    0x0ull, // MissionPreparationCallbackImpl_SetupMissionName
+    0x0ull, // EquipDetailsCallbackImpl_CreateCarryingDifferenceText
+    0x0ull, // EquipDetailsCallbackImpl_CreateBulletDifferenceText
+    0x0ull, // TppUIInfoTypingTextImpl_SetTypingText
+    0x0ull, // LoadoutPanelInfo_RefreshLoadoutText
+    0x0ull, // ItemSelectorRecordCallFunc_UpdateRecords
+    0x0ull, // MbDvcSideOpsCallbackImpl_ShowCompleteRatio
+    0x0ull, // TppUICountAnnounceImpl_SetAnnounceText
+    0x0ull, // LoadingTipsEv_GetTitleText
+    0x0ull, // LoadingTipsEv_UpdateActPhase
+    0x0ull, // EquipCrossEvCall_SetCircleCursorFromSrickDir
+    0x0ull, // MbDvcMissionListCallbackImpl_ShowMissionInfoTextBox
+    0x0ull, // GameOverEvCall_UpdateSelectText
+    0x0ull, // PopupEvCall_SettingPopup
+    0x0ull, // SetEquipBackgroundTexture
+    0x0ull, // ModelNodeMesh_SetTextureName
+    0x0ull, // MbDvcSideOpsCallbackImpl_UpdateInformationTextBox
 };
 
 static std::wstring GetModuleDirectory(HMODULE hModule)

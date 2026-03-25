@@ -24,6 +24,7 @@
     <ProjectGuid>{0eada493-20e3-4f39-930a-df9467d47ae6}</ProjectGuid>
     <RootNamespace>MSGVHOOK</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <ProjectName>V_Restored_Languages</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -166,14 +167,48 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="src\fox\ui\TextAnalysis\CreateTextUnits.cpp" />
+    <ClCompile Include="src\tpp\ui\equip\equip_SetEquipBackgroundTexture.cpp" />
+    <ClCompile Include="src\tpp\ui\hud\AnnounceLogViewer\AnnounceLogViewer_CallLogView.cpp" />
     <ClCompile Include="src\tpp\ui\hud\ChapterTelopInfo\GetFtexPathId.cpp" />
+    <ClCompile Include="src\tpp\ui\hud\DisplayTimerEvCall\SetDisplayText.cpp" />
+    <ClCompile Include="src\tpp\ui\hud\EquipCrossEvCall\EquipCrossEvCall_SetCircleCursorFromSrickDir.cpp" />
+    <ClCompile Include="src\tpp\ui\hud\HeadMarkMarkerEvCall\HeadMarkMarkerEvCall_SetMarkerText.cpp" />
+    <ClCompile Include="src\tpp\ui\hud\impl\TppUICountAnnounceImpl\TppUICountAnnounceImpl_SetAnnounceText.cpp" />
+    <ClCompile Include="src\tpp\ui\hud\impl\TppUIInfoTypingTextImpl\TppUIInfoTypingTextImpl_SetTypingText.cpp" />
     <ClCompile Include="src\tpp\ui\hud\impl\TppUILangSelectPopupImpl\FixKorCh.cpp" />
     <ClCompile Include="src\tpp\ui\hud\impl\TppUILangSelectPopupImpl\FUN_145cc6360.cpp" />
     <ClCompile Include="src\tpp\ui\hud\impl\TppUILangSelectPopupImpl\TppUILangSelectPopupImpl.cpp" />
+    <ClCompile Include="src\tpp\ui\hud\TelopStartTitleEvCall\TelopStartTitleEvCall_SetTextMissionTelopName.cpp" />
+    <ClCompile Include="src\tpp\ui\hud\TelopStartTitleEvCall\TelopStartTitleEvCall_Update.cpp" />
+    <ClCompile Include="src\tpp\ui\hud\TypingLogAct\TypingLogAct_ActTyping.cpp" />
     <ClCompile Include="src\tpp\ui\lang\UnkLoadTppPartsLangFpk.cpp" />
+    <ClCompile Include="src\tpp\ui\menu\GameOverEvCall\GameOverEvCall_UpdateSelectText.cpp" />
+    <ClCompile Include="src\tpp\ui\menu\GamePauseMenuAct.cpp" />
+    <ClCompile Include="src\tpp\ui\menu\impl\CallMenuImpl\SetCommandText.cpp" />
+    <ClCompile Include="src\tpp\ui\menu\impl\CustomizeSlotSelectorCallbackImpl\SetupListElementWalkerGear.cpp" />
+    <ClCompile Include="src\tpp\ui\menu\impl\ItemSelectorRecordCallFunc\ItemSelectorRecordCallFunc_UpdateRecords.cpp" />
+    <ClCompile Include="src\tpp\ui\menu\impl\MbDvcMissionListCallbackImpl\MbDvcMissionListCallbackImpl_ShowMissionInfoTextBox.cpp" />
+    <ClCompile Include="src\tpp\ui\menu\impl\MbDvcMissionListRecordCallFunc\MbDvcMissionListRecordCallFunc_Start.cpp" />
+    <ClCompile Include="src\tpp\ui\menu\impl\MbDvcSideOpsCallbackImpl\MbDvcSideOpsCallbackImpl_ShowCompleteRatio.cpp" />
+    <ClCompile Include="src\tpp\ui\menu\impl\MbDvcSideOpsCallbackImpl\MbDvcSideOpsCallbackImpl_UpdateInformationTextBox.cpp" />
+    <ClCompile Include="src\tpp\ui\menu\impl\MbDvcSideOpsRecordCallFunc\MbDvcSideOpsRecordCallFunc_ViewRecord.cpp" />
     <ClCompile Include="src\tpp\ui\menu\impl\MenuSystemImpl\GetTipsLangBlockPath.cpp" />
     <ClCompile Include="SetLuaFunctions.cpp" />
+    <ClCompile Include="src\tpp\ui\menu\impl\MissionPreparationCallbackImpl\MissionPreparationCallbackImpl_SetupMissionName.cpp" />
     <ClCompile Include="src\tpp\ui\menu\impl\MotherBaseDevicePauseHelpTableImpl\GetPauseHelpLangBlockPath.cpp" />
+    <ClCompile Include="src\tpp\ui\menu\impl\`anonymous_namespace%27\LoadoutPanelInfo\LoadoutPanelInfo_RefreshLoadoutText.cpp" />
+    <ClCompile Include="src\tpp\ui\menu\LoadingTipsEv\LoadingTipsEv_GetTitleText.cpp" />
+    <ClCompile Include="src\tpp\ui\menu\LoadingTipsEv\LoadingTipsEv_UpdateActPhase.cpp" />
+    <ClCompile Include="src\tpp\ui\menu\MbDvcMissionInfoCallback\MbDvcMissionInfoCallback_SetMissionInfoTexts.cpp" />
+    <ClCompile Include="src\tpp\ui\menu\MbLogViewerEv\BodyLayout\SetMainText.cpp" />
+    <ClCompile Include="src\tpp\ui\menu\mbm\impl\EquipDetailsCallbackImpl\EquipDetailsCallbackImpl_CreateBulletDifferenceText.cpp" />
+    <ClCompile Include="src\tpp\ui\menu\mbm\impl\EquipDetailsCallbackImpl\EquipDetailsCallbackImpl_CreateCarryingDifferenceText.cpp" />
+    <ClCompile Include="src\tpp\ui\menu\MbTitleEv\MbTitleEv_GetTypingText.cpp" />
+    <ClCompile Include="src\tpp\ui\menu\MbTitleEv\MbTitleEv_SetMenuNameText.cpp" />
+    <ClCompile Include="src\tpp\ui\menu\PopupEvCall\PopupEvCall_SettingPopup.cpp" />
+    <ClCompile Include="src\tpp\ui\menu\TipsLayoutController\TipsLayoutController_SetPageText.cpp" />
+    <ClCompile Include="src\tpp\ui\menu\TitleLayoutController.cpp" />
     <ClCompile Include="src\tpp\ui\UiCommand\ShowChapterTelop.cpp" />
     <ClCompile Include="src\tpp\ui\UiCommand\ShowTextureLogo.cpp" />
     <ClCompile Include="src\tpp\ui\lang\UnkLoadUIDefaultDataFunc.cpp" />

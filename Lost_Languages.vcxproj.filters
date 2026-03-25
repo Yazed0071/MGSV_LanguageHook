@@ -98,6 +98,108 @@
     <ClCompile Include="AddressSet.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\fox\ui\TextAnalysis\CreateTextUnits.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\tpp\ui\hud\DisplayTimerEvCall\SetDisplayText.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\tpp\ui\menu\MbLogViewerEv\BodyLayout\SetMainText.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\tpp\ui\menu\impl\CustomizeSlotSelectorCallbackImpl\SetupListElementWalkerGear.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\tpp\ui\menu\GamePauseMenuAct.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\tpp\ui\menu\MbDvcMissionInfoCallback\MbDvcMissionInfoCallback_SetMissionInfoTexts.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\tpp\ui\menu\impl\CallMenuImpl\SetCommandText.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\tpp\ui\menu\TitleLayoutController.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\tpp\ui\hud\TelopStartTitleEvCall\TelopStartTitleEvCall_Update.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\tpp\ui\hud\TelopStartTitleEvCall\TelopStartTitleEvCall_SetTextMissionTelopName.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\tpp\ui\hud\AnnounceLogViewer\AnnounceLogViewer_CallLogView.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\tpp\ui\hud\HeadMarkMarkerEvCall\HeadMarkMarkerEvCall_SetMarkerText.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\tpp\ui\menu\MbTitleEv\MbTitleEv_GetTypingText.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\tpp\ui\menu\MbTitleEv\MbTitleEv_SetMenuNameText.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\tpp\ui\menu\impl\MbDvcMissionListRecordCallFunc\MbDvcMissionListRecordCallFunc_Start.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\tpp\ui\menu\impl\MbDvcSideOpsRecordCallFunc\MbDvcSideOpsRecordCallFunc_ViewRecord.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\tpp\ui\menu\impl\MissionPreparationCallbackImpl\MissionPreparationCallbackImpl_SetupMissionName.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\tpp\ui\menu\mbm\impl\EquipDetailsCallbackImpl\EquipDetailsCallbackImpl_CreateCarryingDifferenceText.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\tpp\ui\menu\mbm\impl\EquipDetailsCallbackImpl\EquipDetailsCallbackImpl_CreateBulletDifferenceText.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\tpp\ui\hud\impl\TppUIInfoTypingTextImpl\TppUIInfoTypingTextImpl_SetTypingText.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\tpp\ui\menu\impl\`anonymous_namespace%27\LoadoutPanelInfo\LoadoutPanelInfo_RefreshLoadoutText.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\tpp\ui\menu\TipsLayoutController\TipsLayoutController_SetPageText.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\tpp\ui\hud\TypingLogAct\TypingLogAct_ActTyping.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\tpp\ui\menu\impl\ItemSelectorRecordCallFunc\ItemSelectorRecordCallFunc_UpdateRecords.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\tpp\ui\menu\impl\MbDvcSideOpsCallbackImpl\MbDvcSideOpsCallbackImpl_ShowCompleteRatio.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\tpp\ui\hud\impl\TppUICountAnnounceImpl\TppUICountAnnounceImpl_SetAnnounceText.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\tpp\ui\menu\LoadingTipsEv\LoadingTipsEv_GetTitleText.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\tpp\ui\menu\LoadingTipsEv\LoadingTipsEv_UpdateActPhase.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\tpp\ui\hud\EquipCrossEvCall\EquipCrossEvCall_SetCircleCursorFromSrickDir.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\tpp\ui\menu\impl\MbDvcMissionListCallbackImpl\MbDvcMissionListCallbackImpl_ShowMissionInfoTextBox.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\tpp\ui\menu\GameOverEvCall\GameOverEvCall_UpdateSelectText.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\tpp\ui\menu\PopupEvCall\PopupEvCall_SettingPopup.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\tpp\ui\equip\equip_SetEquipBackgroundTexture.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\tpp\ui\menu\impl\MbDvcSideOpsCallbackImpl\MbDvcSideOpsCallbackImpl_UpdateInformationTextBox.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Library Include="lib\libMinHook.x64.lib" />

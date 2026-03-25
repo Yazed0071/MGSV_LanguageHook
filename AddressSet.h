@@ -51,7 +51,49 @@ struct AddressSet
     uintptr_t lua_isstring = 0;
     uintptr_t lua_isnumber = 0;
     uintptr_t lua_tonumber = 0;
-};
+
+
+
+
+    uintptr_t SetDisplayText = 0;
+    uintptr_t SetMainText = 0;
+    uintptr_t CreateTextUnits = 0; 
+    uintptr_t SetupListElementWalkerGear = 0;
+    uintptr_t SetupMenuText = 0;
+    uintptr_t SetMenuInfoText = 0;
+    uintptr_t SetMissionInfoTexts = 0;
+    uintptr_t SetCommandText = 0;
+    uintptr_t SetPageText = 0;
+    uintptr_t SetTextForModelNodeText = 0;
+    uintptr_t TelopStartTitleEvCallUpdate = 0;
+    uintptr_t SetTextMissionTelopNameEpisodeSnprintfCall = 0;
+    uintptr_t CallLogView = 0;
+    uintptr_t SetMarkerText = 0;
+    uintptr_t GetTypingText = 0;
+    uintptr_t SetMenuNameText = 0;
+    uintptr_t GetLangText = 0;
+    uintptr_t MbDvcMissionListRecordCallFuncStart = 0;
+    uintptr_t SecurityUpdateEventLogInfo = 0;
+    uintptr_t SecurityGetEventLogTypingText = 0;
+    uintptr_t MbDvcSideOpsRecordCallFuncViewRecord = 0;
+    uintptr_t MissionPreparationCallbackImpl_SetupMissionName = 0;
+    uintptr_t EquipDetailsCallbackImpl_CreateCarryingDifferenceText = 0;
+    uintptr_t EquipDetailsCallbackImpl_CreateBulletDifferenceText = 0;
+    uintptr_t TppUIInfoTypingTextImpl_SetTypingText = 0;
+    uintptr_t LoadoutPanelInfo_RefreshLoadoutText = 0;
+    uintptr_t ItemSelectorRecordCallFunc_UpdateRecords = 0;
+    uintptr_t MbDvcSideOpsCallbackImpl_ShowCompleteRatio = 0;
+    uintptr_t TppUICountAnnounceImpl_SetAnnounceText = 0;
+    uintptr_t LoadingTipsEv_GetTitleText = 0;
+    uintptr_t LoadingTipsEv_UpdateActPhase = 0;
+    uintptr_t EquipCrossEvCall_SetCircleCursorFromSrickDir = 0;
+    uintptr_t MbDvcMissionListCallbackImpl_ShowMissionInfoTextBox = 0;
+    uintptr_t GameOverEvCall_UpdateSelectText = 0;
+    uintptr_t PopupEvCall_SettingPopup = 0;
+    uintptr_t SetEquipBackgroundTexture = 0;
+    uintptr_t ModelNodeMesh_SetTextureName = 0;
+    uintptr_t MbDvcSideOpsCallbackImpl_UpdateInformationTextBox = 0;
+}; 
 
 extern GameBuild gGameBuild;
 extern AddressSet gAddr;
