@@ -66,10 +66,6 @@ static LoadPageBlock_t       LoadPageBlock = nullptr;
 
 static UnkLoadUIDefaultDataFunc_t g_Orig = nullptr;
 
-#ifndef DESTROY_PARAM3
-#define DESTROY_PARAM3 1
-#endif
-
 static void __fastcall hkUnkLoadUIDefaultDataFunc(void* param_1, void* param_2, void* param_3)
 {
     const bool isArabic = (IsArabLanguage && IsArabLanguage());
@@ -101,12 +97,7 @@ static void __fastcall hkUnkLoadUIDefaultDataFunc(void* param_1, void* param_2, 
         PathAssign(outPath, &tmp);
 
     LoadPageBlock(param_1, param_2, param_3);
-
     PathDtor(&tmp);
-
-    #if DESTROY_PARAM3
-    PathDtor(outPath);
-    #endif
 }
 
 bool Install_UnkLoadUIDefaultDataFunc_Hook()

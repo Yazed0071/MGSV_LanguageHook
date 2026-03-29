@@ -495,8 +495,8 @@ static void RemoveAll()
     RemoveItemSelectorRecordCallFuncUpdateRecordsArabicHook();
     RemoveMbDvcSideOpsCallbackImplShowCompleteRatioArabicTextHook();
     RemoveTppUICountAnnounceImplSetAnnounceTextArabicHook();
-    RemoveLoadingTipsEvGetTitleTextArabicHook();
-    RemoveLoadingTipsEvUpdateActPhaseArabicLeftToRightAlignHook();
+   RemoveLoadingTipsEvGetTitleTextArabicHook();
+   RemoveLoadingTipsEvUpdateActPhaseArabicLeftToRightAlignHook();
     RemoveEquipCrossEvCallSetCircleCursorFromSrickDirArabicLeftToRightAlignHook();
     RemoveMbDvcMissionListCallbackImplShowMissionInfoTextBoxArabicLeftToRightAlignHook();
     RemoveGameOverEvCallUpdateSelectTextArabicLeftToRightAlignHook();

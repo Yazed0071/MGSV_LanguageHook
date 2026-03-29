@@ -28,6 +28,10 @@ namespace
     static void* gTarget = nullptr;
 
     static constexpr uint8_t kForcedMainTextAlign = 2; // 0=left, 1=center, 2=right
+
+    static constexpr bool kEnableReapplyMainText = false;
+    static constexpr bool kEnableSlashFix = false;
+    static constexpr bool kEnableForcedAlignment = true;
 }
 
 static bool IsArabicSafe()
@@ -348,13 +352,21 @@ static void ApplyArabicMissionListMainText(void* thisPtr)
     if (after == before)
         return;
 
+    if (after.size() + 1 > 0x80)
+    {
+        Log("[MbDvcMissionListRecordCallFunc::Start] main rewrite skipped: output too large.\n");
+        return;
+    }
+
     if (!SafeWriteCString(mainBuf, 0x80, after.c_str()))
         return;
 
-    if (!ReapplyMainText718(thisPtr))
+    if (kEnableReapplyMainText)
     {
-        Log("[MbDvcMissionListRecordCallFunc::Start] ReapplyMainText718 failed.\n");
-        return;
+        if (!ReapplyMainText718(thisPtr))
+        {
+            Log("[MbDvcMissionListRecordCallFunc::Start] ReapplyMainText718 failed.\n");
+        }
     }
 
     Log("[MbDvcMissionListRecordCallFunc::Start] main before: %s\n", before.c_str());
@@ -376,6 +388,15 @@ static void ApplyArabicMissionListSlashText(void* thisPtr)
     const std::string after = SwapSlashFormat(before);
     if (after == before)
         return;
+
+    if (!kEnableSlashFix)
+        return;
+
+    if (after.size() + 1 > 0x40)
+    {
+        Log("[MbDvcMissionListRecordCallFunc::Start] slash rewrite skipped: output too large.\n");
+        return;
+    }
 
     if (!SafeWriteCString(slashBuf, 0x40, after.c_str()))
         return;
@@ -403,8 +424,11 @@ static void __fastcall hkMbDvcMissionListRecordCallFunc_Start(void* thisPtr, uin
     ApplyArabicMissionListMainText(thisPtr);
     ApplyArabicMissionListSlashText(thisPtr);
 
-    if (!ForceMainTextAlignment(thisPtr, kForcedMainTextAlign))
-        Log("[MbDvcMissionListRecordCallFunc::Start] ForceMainTextAlignment failed.\n");
+    if (kEnableForcedAlignment)
+    {
+        if (!ForceMainTextAlignment(thisPtr, kForcedMainTextAlign))
+            Log("[MbDvcMissionListRecordCallFunc::Start] ForceMainTextAlignment failed.\n");
+    }
 }
 
 bool InstallMbDvcMissionListRecordCallFuncStartArabicFormatHook(HMODULE hGame)
