@@ -3,16 +3,15 @@
 #include <unknwn.h>
 #include <atomic>
 #include <cwchar>
+#include <cstdio>
+
 #include "MinHook.h"
 #include "log.h"
 #include "AddressSet.h"
 
 #define VRL_ENABLE_AUTO_INIT_THREAD 1
-#define VRL_ENABLE_DINPUT8_PROXY    1
+#define VRL_ENABLE_DINPUT8_PROXY 1
 #define VRL_PROXY_ONLY_IF_NAMED_DINPUT8 1
-#define VRL_ENABLE_SECURITY_UPDATE_EVENT_LOG_INFO_HOOK      0
-#define VRL_ENABLE_SECURITY_GET_EVENT_LOG_TYPING_TEXT_HOOK  0
-
 
 bool InstallGameLangStateKeepCJKHook(HMODULE hGame);
 bool InstallLangSelectPopupPagedRewriteHooks(HMODULE hGame);
@@ -31,6 +30,30 @@ bool InstallGamePauseMenuArabicTextHooks(HMODULE hGame);
 bool InstallMbDvcMissionInfoSetMissionInfoTextsArabicHook(HMODULE hGame);
 bool InstallCallMenuImplSetCommandTextArabicHook(HMODULE hGame);
 bool InstallTipsLayoutControllerSetPageTextHook(HMODULE hGame);
+bool InstallTelopStartTitleEvCallUpdateArabicTypingDirectionHook(HMODULE hGame);
+bool InstallSetTextMissionTelopNameArabicEpisodeFormatHook(HMODULE hGame);
+bool InstallAnnounceLogViewerCallLogViewArabicLeftToRightAlignHook(HMODULE hGame);
+bool InstallHeadMarkMarkerEvCallSetMarkerTextArabicHook(HMODULE hGame);
+bool InstallMbTitleEvGetTypingTextArabicHook(HMODULE hGame);
+bool InstallMbTitleEvSetMenuNameTextArabicHook(HMODULE hGame);
+bool InstallMbDvcMissionListRecordCallFuncStartArabicFormatHook(HMODULE hGame);
+bool InstallMbDvcSideOpsRecordCallFuncViewRecordArabicHook(HMODULE hGame);
+bool InstallMissionPreparationCallbackImplSetupMissionNameArabicHook(HMODULE hGame);
+bool InstallEquipDetailsCallbackImplCreateCarryingDifferenceTextArabicHook(HMODULE hGame);
+bool InstallEquipDetailsCallbackImplCreateBulletDifferenceTextArabicHook(HMODULE hGame);
+bool InstallTppUIInfoTypingTextImplSetTypingTextArabicHook(HMODULE hGame);
+bool InstallLoadoutPanelInfoRefreshLoadoutTextArabicHook(HMODULE hGame);
+bool InstallItemSelectorRecordCallFuncUpdateRecordsArabicHook(HMODULE hGame);
+bool InstallMbDvcSideOpsCallbackImplShowCompleteRatioArabicTextHook(HMODULE hGame);
+bool InstallTppUICountAnnounceImplSetAnnounceTextArabicHook(HMODULE hGame);
+bool InstallLoadingTipsEvGetTitleTextArabicHook(HMODULE hGame);
+bool InstallLoadingTipsEvUpdateActPhaseArabicLeftToRightAlignHook(HMODULE hGame);
+bool InstallEquipCrossEvCallSetCircleCursorFromSrickDirArabicLeftToRightAlignHook(HMODULE hGame);
+bool InstallMbDvcMissionListCallbackImplShowMissionInfoTextBoxArabicLeftToRightAlignHook(HMODULE hGame);
+bool InstallGameOverEvCallUpdateSelectTextArabicLeftToRightAlignHook(HMODULE hGame);
+bool InstallPopupEvCallSettingPopupArabicLeftToRightAlignHook(HMODULE hGame);
+bool InstallSetEquipBackgroundTextureArabicHook(HMODULE hGame);
+bool InstallMbDvcSideOpsCallbackImplUpdateInformationTextBoxArabicHook(HMODULE hGame);
 
 void RemoveGameLangStateKeepCJKHook();
 void RemoveLangSelectPopupPagedRewriteHooks();
@@ -48,82 +71,37 @@ void RemoveGamePauseMenuArabicTextHooks();
 void RemoveMbDvcMissionInfoSetMissionInfoTextsArabicHook();
 void RemoveCallMenuImplSetCommandTextArabicHook();
 void RemoveTipsLayoutControllerSetPageTextHook();
-
-bool InstallTelopStartTitleEvCallUpdateArabicTypingDirectionHook(HMODULE hGame);
 void RemoveTelopStartTitleEvCallUpdateArabicTypingDirectionHook();
-
-bool InstallSetTextMissionTelopNameArabicEpisodeFormatHook(HMODULE hGame);
 void RemoveSetTextMissionTelopNameArabicEpisodeFormatHook();
-
-bool InstallAnnounceLogViewerCallLogViewArabicLeftToRightAlignHook(HMODULE hGame);
 void RemoveAnnounceLogViewerCallLogViewArabicLeftToRightAlignHook();
-
-bool InstallHeadMarkMarkerEvCallSetMarkerTextArabicHook(HMODULE hGame);
 void RemoveHeadMarkMarkerEvCallSetMarkerTextArabicHook();
-
-bool InstallMbTitleEvGetTypingTextArabicHook(HMODULE hGame);
 void RemoveMbTitleEvGetTypingTextArabicHook();
-
-bool InstallMbTitleEvSetMenuNameTextArabicHook(HMODULE hGame);
 void RemoveMbTitleEvSetMenuNameTextArabicHook();
-
-bool InstallMbDvcMissionListRecordCallFuncStartArabicFormatHook(HMODULE hGame);
 void RemoveMbDvcMissionListRecordCallFuncStartArabicFormatHook();
-
-bool InstallMbDvcSideOpsRecordCallFuncViewRecordArabicHook(HMODULE hGame);
 void RemoveMbDvcSideOpsRecordCallFuncViewRecordArabicHook();
-
-bool InstallMissionPreparationCallbackImplSetupMissionNameArabicHook(HMODULE hGame);
 void RemoveMissionPreparationCallbackImplSetupMissionNameArabicHook();
-
-bool InstallEquipDetailsCallbackImplCreateCarryingDifferenceTextArabicHook(HMODULE hGame);
 void RemoveEquipDetailsCallbackImplCreateCarryingDifferenceTextArabicHook();
-
-bool InstallEquipDetailsCallbackImplCreateBulletDifferenceTextArabicHook(HMODULE hGame);
 void RemoveEquipDetailsCallbackImplCreateBulletDifferenceTextArabicHook();
-
-bool InstallTppUIInfoTypingTextImplSetTypingTextArabicHook(HMODULE hGame);
 void RemoveTppUIInfoTypingTextImplSetTypingTextArabicHook();
-
-bool InstallLoadoutPanelInfoRefreshLoadoutTextArabicHook(HMODULE hGame);
 void RemoveLoadoutPanelInfoRefreshLoadoutTextArabicHook();
-
-bool InstallItemSelectorRecordCallFuncUpdateRecordsArabicHook(HMODULE hGame);
 void RemoveItemSelectorRecordCallFuncUpdateRecordsArabicHook();
-
-bool InstallMbDvcSideOpsCallbackImplShowCompleteRatioArabicTextHook(HMODULE hGame);
 void RemoveMbDvcSideOpsCallbackImplShowCompleteRatioArabicTextHook();
-
-bool InstallTppUICountAnnounceImplSetAnnounceTextArabicHook(HMODULE hGame);
 void RemoveTppUICountAnnounceImplSetAnnounceTextArabicHook();
-
-bool InstallLoadingTipsEvGetTitleTextArabicHook(HMODULE hGame);
 void RemoveLoadingTipsEvGetTitleTextArabicHook();
-
-bool InstallLoadingTipsEvUpdateActPhaseArabicLeftToRightAlignHook(HMODULE hGame);
 void RemoveLoadingTipsEvUpdateActPhaseArabicLeftToRightAlignHook();
-
-bool InstallEquipCrossEvCallSetCircleCursorFromSrickDirArabicLeftToRightAlignHook(HMODULE hGame);
 void RemoveEquipCrossEvCallSetCircleCursorFromSrickDirArabicLeftToRightAlignHook();
-
-bool InstallMbDvcMissionListCallbackImplShowMissionInfoTextBoxArabicLeftToRightAlignHook(HMODULE hGame);
 void RemoveMbDvcMissionListCallbackImplShowMissionInfoTextBoxArabicLeftToRightAlignHook();
-
-bool InstallGameOverEvCallUpdateSelectTextArabicLeftToRightAlignHook(HMODULE hGame);
 void RemoveGameOverEvCallUpdateSelectTextArabicLeftToRightAlignHook();
-
-bool InstallPopupEvCallSettingPopupArabicLeftToRightAlignHook(HMODULE hGame);
 void RemovePopupEvCallSettingPopupArabicLeftToRightAlignHook();
-
-bool InstallSetEquipBackgroundTextureArabicHook(HMODULE hGame);
 void RemoveSetEquipBackgroundTextureArabicHook();
-
-bool InstallMbDvcSideOpsCallbackImplUpdateInformationTextBoxArabicHook(HMODULE hGame);
 void RemoveMbDvcSideOpsCallbackImplUpdateInformationTextBoxArabicHook();
 
-// ------------------------------------------------------------
-// dinput8 proxy
-// ------------------------------------------------------------
+namespace
+{
+    static std::atomic_bool gStarted{ false };
+    static std::atomic_bool gInitialized{ false };
+    static std::atomic_bool gConsoleReady{ false };
+}
 
 #if VRL_ENABLE_DINPUT8_PROXY
 
@@ -149,15 +127,6 @@ static DllRegisterServer_t   gRealDllRegisterServer = nullptr;
 static DllUnregisterServer_t gRealDllUnregisterServer = nullptr;
 static GetdfDIJoystick_t     gRealGetdfDIJoystick = nullptr;
 
-#endif
-
-namespace
-{
-    static std::atomic_bool gInitialized{ false };
-    static std::atomic_bool gInitStarted{ false };
-}
-
-/* Checks if this DLL file is actually named dinput8.dll. Parameters: hModule = current DLL module. */
 static bool IsCurrentModuleNamedDInput8(HMODULE hModule)
 {
     if (!hModule)
@@ -169,13 +138,9 @@ static bool IsCurrentModuleNamedDInput8(HMODULE hModule)
 
     const wchar_t* fileName = wcsrchr(path, L'\\');
     fileName = fileName ? (fileName + 1) : path;
-
     return _wcsicmp(fileName, L"dinput8.dll") == 0;
 }
 
-#if VRL_ENABLE_DINPUT8_PROXY
-
-/* Returns true if proxy mode should be active. Parameters: hModule = current DLL module. */
 static bool ShouldUseDInput8Proxy(HMODULE hModule)
 {
     #if VRL_PROXY_ONLY_IF_NAMED_DINPUT8
@@ -186,14 +151,13 @@ static bool ShouldUseDInput8Proxy(HMODULE hModule)
     #endif
 }
 
-/* Builds the full path to the real system dinput8.dll. Parameters: outPath = destination buffer, outCount = number of wchar_t entries. */
 static bool BuildSystemDInput8Path(wchar_t* outPath, size_t outCount)
 {
     if (!outPath || outCount == 0)
         return false;
 
     wchar_t systemDir[MAX_PATH] = {};
-    UINT len = GetSystemDirectoryW(systemDir, MAX_PATH);
+    const UINT len = GetSystemDirectoryW(systemDir, MAX_PATH);
     if (len == 0 || len >= MAX_PATH)
         return false;
 
@@ -206,7 +170,6 @@ static bool BuildSystemDInput8Path(wchar_t* outPath, size_t outCount)
     return true;
 }
 
-/* Resolves all needed real dinput8 exports. Parameters: none. */
 static bool ResolveRealDInput8Exports()
 {
     if (!gRealDInput8)
@@ -225,13 +188,9 @@ static bool ResolveRealDInput8Exports()
     gRealGetdfDIJoystick =
         reinterpret_cast<GetdfDIJoystick_t>(GetProcAddress(gRealDInput8, "GetdfDIJoystick"));
 
-    if (!gRealDirectInput8Create)
-        return false;
-
-    return true;
+    return gRealDirectInput8Create != nullptr;
 }
 
-/* Loads the real system dinput8.dll. Parameters: hModule = current DLL module. */
 static bool LoadRealDInput8IfNeeded(HMODULE hModule)
 {
     if (!ShouldUseDInput8Proxy(hModule))
@@ -266,7 +225,6 @@ static bool LoadRealDInput8IfNeeded(HMODULE hModule)
     return true;
 }
 
-/* Frees the real system dinput8.dll. Parameters: none. */
 static void FreeRealDInput8()
 {
     if (gRealDInput8)
@@ -283,7 +241,12 @@ static void FreeRealDInput8()
     gRealGetdfDIJoystick = nullptr;
 }
 
-extern "C" HRESULT WINAPI ProxyDirectInput8Create(HINSTANCE hinst, DWORD dwVersion, REFIID riidltf, LPVOID* ppvOut, LPUNKNOWN punkOuter)
+extern "C" HRESULT WINAPI ProxyDirectInput8Create(
+    HINSTANCE hinst,
+    DWORD dwVersion,
+    REFIID riidltf,
+    LPVOID* ppvOut,
+    LPUNKNOWN punkOuter)
 {
     if (!gRealDirectInput8Create)
         return E_FAIL;
@@ -333,134 +296,154 @@ extern "C" const void* WINAPI ProxyGetdfDIJoystick(void)
 
 #endif
 
-/* Installs all enabled hooks. Parameters: hGame = main game module. */
+static void SetupConsole()
+{
+    #ifdef _DEBUG
+    if (gConsoleReady.load())
+        return;
+
+    if (!AllocConsole())
+        AttachConsole(ATTACH_PARENT_PROCESS);
+
+    FILE* fp = nullptr;
+    freopen_s(&fp, "CONOUT$", "w", stdout);
+    freopen_s(&fp, "CONOUT$", "w", stderr);
+    freopen_s(&fp, "CONIN$", "r", stdin);
+
+    SetConsoleTitleW(L"V_FrameWork");
+    gConsoleReady.store(true);
+
+    printf("[DLL] Console ready\n");
+    fflush(stdout);
+    #endif
+}
+
 static void InstallAll(HMODULE hGame)
 {
     if (!Install_SetLuaFunctions_Hook())
-        Log("[DLL] Failed to install Install_SetLuaFunctions_Hook hook.\n");
+        Log("[DLL] Failed: Install_SetLuaFunctions_Hook\n");
 
     if (!InstallGameLangStateKeepCJKHook(hGame))
-        Log("[DLL] Failed to install GameLangStateKeepCJK hook.\n");
+        Log("[DLL] Failed: InstallGameLangStateKeepCJKHook\n");
 
     if (!InstallLangSelectPopupPagedRewriteHooks(hGame))
-        Log("[DLL] Failed to install LangSelectPopupPagedDynamic hooks.\n");
+        Log("[DLL] Failed: InstallLangSelectPopupPagedRewriteHooks\n");
 
     if (!InstallLanguageHook(hGame))
-        Log("[DLL] Failed to install LanguageHook.\n");
+        Log("[DLL] Failed: InstallLanguageHook\n");
 
     if (!InstallShowTextureLogoArabicHook(hGame))
-        Log("[DLL] Failed to install ShowTextureLogo Arabic hook.\n");
+        Log("[DLL] Failed: InstallShowTextureLogoArabicHook\n");
 
     if (!InstallChapterTelopArabicFtexHook(hGame))
-        Log("[DLL] Failed to install ChapterTelopInfo::GetFtexPathId Arabic hook.\n");
+        Log("[DLL] Failed: InstallChapterTelopArabicFtexHook\n");
 
     if (!Install_UnkLoadUIDefaultDataFunc_Hook())
-        Log("[DLL] Failed to install UnkLoadUIDefaultDataFunc hook.\n");
+        Log("[DLL] Failed: Install_UnkLoadUIDefaultDataFunc_Hook\n");
 
     if (!InstallUnkLoadTppPartsLangFpkArabicFixHook(hGame))
-        Log("[DLL] Failed to install UnkLoadTppPartsLangFpk Arabic fix hook.\n");
+        Log("[DLL] Failed: InstallUnkLoadTppPartsLangFpkArabicFixHook\n");
 
     if (!InstallGetTipsLangBlockPathHook(hGame))
-        Log("[DLL] Failed to install GetTipsLangBlockPath hook.\n");
+        Log("[DLL] Failed: InstallGetTipsLangBlockPathHook\n");
 
     if (!InstallGetPauseHelpLangBlockPathHook(hGame))
-        Log("[DLL] Failed to install GetPauseHelpLangBlockPath hook.\n");
+        Log("[DLL] Failed: InstallGetPauseHelpLangBlockPathHook\n");
 
     if (!InstallDisplayTimerEvCallSetDisplayTextHook(hGame))
-        Log("[DLL] Failed to install InstallDisplayTimerEvCallSetDisplayTextHook hook.\n");
+        Log("[DLL] Failed: InstallDisplayTimerEvCallSetDisplayTextHook\n");
 
     if (!InstallMbLogViewerBodyLayoutSetMainTextArabicHook(hGame))
-        Log("[DLL] Failed to install InstallMbLogViewerBodyLayoutSetMainTextArabicHook hook.\n");
+        Log("[DLL] Failed: InstallMbLogViewerBodyLayoutSetMainTextArabicHook\n");
 
     if (!InstallCustomizeSlotSelectorSetupListElementWalkerGearHook(hGame))
-        Log("[DLL] Failed to install InstallCustomizeSlotSelectorSetupListElementWalkerGearHook hook.\n");
+        Log("[DLL] Failed: InstallCustomizeSlotSelectorSetupListElementWalkerGearHook\n");
 
     if (!InstallGamePauseMenuArabicTextHooks(hGame))
-        Log("[DLL] Failed to install InstallGamePauseMenuArabicTextHooks hook.\n");
+        Log("[DLL] Failed: InstallGamePauseMenuArabicTextHooks\n");
 
     if (!InstallMbDvcMissionInfoSetMissionInfoTextsArabicHook(hGame))
-        Log("[DLL] Failed to install InstallMbDvcMissionInfoSetMissionInfoTextsArabicHook hook.\n");
+        Log("[DLL] Failed: InstallMbDvcMissionInfoSetMissionInfoTextsArabicHook\n");
 
     if (!InstallCallMenuImplSetCommandTextArabicHook(hGame))
-        Log("[DLL] Failed to install InstallCallMenuImplSetCommandTextArabicHook hook.\n");
+        Log("[DLL] Failed: InstallCallMenuImplSetCommandTextArabicHook\n");
 
     if (!InstallTipsLayoutControllerSetPageTextHook(hGame))
-        Log("[DLL] Failed to install InstallTipsLayoutControllerSetPageTextHook hook.\n");
+        Log("[DLL] Failed: InstallTipsLayoutControllerSetPageTextHook\n");
 
     if (!InstallTelopStartTitleEvCallUpdateArabicTypingDirectionHook(hGame))
-        Log("[DLL] Failed to install InstallTelopStartTitleEvCallUpdateArabicTypingDirectionHook hook.\n");
+        Log("[DLL] Failed: InstallTelopStartTitleEvCallUpdateArabicTypingDirectionHook\n");
 
     if (!InstallSetTextMissionTelopNameArabicEpisodeFormatHook(hGame))
-        Log("[DLL] Failed to install InstallSetTextMissionTelopNameArabicEpisodeFormatHook hook.\n");
+        Log("[DLL] Failed: InstallSetTextMissionTelopNameArabicEpisodeFormatHook\n");
 
     if (!InstallAnnounceLogViewerCallLogViewArabicLeftToRightAlignHook(hGame))
-        Log("[DLL] Failed to install InstallAnnounceLogViewerCallLogViewArabicLeftToRightAlignHook hook.\n");
+        Log("[DLL] Failed: InstallAnnounceLogViewerCallLogViewArabicLeftToRightAlignHook\n");
 
     if (!InstallHeadMarkMarkerEvCallSetMarkerTextArabicHook(hGame))
-        Log("[DLL] Failed to install InstallHeadMarkMarkerEvCallSetMarkerTextArabicHook hook.\n");
+        Log("[DLL] Failed: InstallHeadMarkMarkerEvCallSetMarkerTextArabicHook\n");
 
     if (!InstallMbTitleEvGetTypingTextArabicHook(hGame))
-        Log("[DLL] Failed to install InstallMbTitleEvGetTypingTextArabicHook hook.\n");
+        Log("[DLL] Failed: InstallMbTitleEvGetTypingTextArabicHook\n");
 
     if (!InstallMbTitleEvSetMenuNameTextArabicHook(hGame))
-        Log("[DLL] Failed to install InstallMbTitleEvSetMenuNameTextArabicHook hook.\n");
+        Log("[DLL] Failed: InstallMbTitleEvSetMenuNameTextArabicHook\n");
 
     if (!InstallMbDvcMissionListRecordCallFuncStartArabicFormatHook(hGame))
-        Log("[DLL] Failed to install InstallMbDvcMissionListRecordCallFuncStartArabicFormatHook hook.\n");
+        Log("[DLL] Failed: InstallMbDvcMissionListRecordCallFuncStartArabicFormatHook\n");
 
     if (!InstallMbDvcSideOpsRecordCallFuncViewRecordArabicHook(hGame))
-        Log("[DLL] Failed to install InstallMbDvcSideOpsRecordCallFuncViewRecordArabicHook hook.\n");
+        Log("[DLL] Failed: InstallMbDvcSideOpsRecordCallFuncViewRecordArabicHook\n");
 
     if (!InstallMissionPreparationCallbackImplSetupMissionNameArabicHook(hGame))
-        Log("[DLL] Failed to install InstallMissionPreparationCallbackImplSetupMissionNameArabicHook hook.\n");
+        Log("[DLL] Failed: InstallMissionPreparationCallbackImplSetupMissionNameArabicHook\n");
 
     if (!InstallEquipDetailsCallbackImplCreateCarryingDifferenceTextArabicHook(hGame))
-        Log("[DLL] Failed to install InstallEquipDetailsCallbackImplCreateCarryingDifferenceTextArabicHook hook.\n");
+        Log("[DLL] Failed: InstallEquipDetailsCallbackImplCreateCarryingDifferenceTextArabicHook\n");
 
     if (!InstallEquipDetailsCallbackImplCreateBulletDifferenceTextArabicHook(hGame))
-        Log("[DLL] Failed to install InstallEquipDetailsCallbackImplCreateBulletDifferenceTextArabicHook hook.\n");
+        Log("[DLL] Failed: InstallEquipDetailsCallbackImplCreateBulletDifferenceTextArabicHook\n");
 
     if (!InstallTppUIInfoTypingTextImplSetTypingTextArabicHook(hGame))
-        Log("[DLL] Failed to install InstallTppUIInfoTypingTextImplSetTypingTextArabicHook hook.\n");
+        Log("[DLL] Failed: InstallTppUIInfoTypingTextImplSetTypingTextArabicHook\n");
 
     if (!InstallLoadoutPanelInfoRefreshLoadoutTextArabicHook(hGame))
-        Log("[DLL] Failed to install InstallLoadoutPanelInfoRefreshLoadoutTextArabicHook hook.\n");
+        Log("[DLL] Failed: InstallLoadoutPanelInfoRefreshLoadoutTextArabicHook\n");
 
     if (!InstallItemSelectorRecordCallFuncUpdateRecordsArabicHook(hGame))
-        Log("[DLL] Failed to install InstallItemSelectorRecordCallFuncUpdateRecordsArabicHook hook.\n");
+        Log("[DLL] Failed: InstallItemSelectorRecordCallFuncUpdateRecordsArabicHook\n");
 
     if (!InstallMbDvcSideOpsCallbackImplShowCompleteRatioArabicTextHook(hGame))
-        Log("[DLL] Failed to install InstallMbDvcSideOpsCallbackImplShowCompleteRatioArabicTextHook hook.\n");
+        Log("[DLL] Failed: InstallMbDvcSideOpsCallbackImplShowCompleteRatioArabicTextHook\n");
 
     if (!InstallTppUICountAnnounceImplSetAnnounceTextArabicHook(hGame))
-        Log("[DLL] Failed to install InstallTppUICountAnnounceImplSetAnnounceTextArabicHook hook.\n");
+        Log("[DLL] Failed: InstallTppUICountAnnounceImplSetAnnounceTextArabicHook\n");
 
     if (!InstallLoadingTipsEvGetTitleTextArabicHook(hGame))
-        Log("[DLL] Failed to install InstallLoadingTipsEvGetTitleTextArabicHook hook.\n");
+        Log("[DLL] Failed: InstallLoadingTipsEvGetTitleTextArabicHook\n");
 
     if (!InstallLoadingTipsEvUpdateActPhaseArabicLeftToRightAlignHook(hGame))
-        Log("[DLL] Failed to install InstallLoadingTipsEvUpdateActPhaseArabicLeftToRightAlignHook hook.\n");
+        Log("[DLL] Failed: InstallLoadingTipsEvUpdateActPhaseArabicLeftToRightAlignHook\n");
 
     if (!InstallEquipCrossEvCallSetCircleCursorFromSrickDirArabicLeftToRightAlignHook(hGame))
-        Log("[DLL] Failed to install InstallEquipCrossEvCallSetCircleCursorFromSrickDirArabicLeftToRightAlignHook hook.\n");
+        Log("[DLL] Failed: InstallEquipCrossEvCallSetCircleCursorFromSrickDirArabicLeftToRightAlignHook\n");
 
     if (!InstallMbDvcMissionListCallbackImplShowMissionInfoTextBoxArabicLeftToRightAlignHook(hGame))
-        Log("[DLL] Failed to install InstallMbDvcMissionListCallbackImplShowMissionInfoTextBoxArabicLeftToRightAlignHook hook.\n");
+        Log("[DLL] Failed: InstallMbDvcMissionListCallbackImplShowMissionInfoTextBoxArabicLeftToRightAlignHook\n");
 
     if (!InstallGameOverEvCallUpdateSelectTextArabicLeftToRightAlignHook(hGame))
-        Log("[DLL] Failed to install InstallGameOverEvCallUpdateSelectTextArabicLeftToRightAlignHook hook.\n");
+        Log("[DLL] Failed: InstallGameOverEvCallUpdateSelectTextArabicLeftToRightAlignHook\n");
 
     if (!InstallPopupEvCallSettingPopupArabicLeftToRightAlignHook(hGame))
-        Log("[DLL] Failed to install InstallPopupEvCallSettingPopupArabicLeftToRightAlignHook hook.\n");
+        Log("[DLL] Failed: InstallPopupEvCallSettingPopupArabicLeftToRightAlignHook\n");
 
     if (!InstallSetEquipBackgroundTextureArabicHook(hGame))
-        Log("[DLL] Failed to install InstallSetEquipBackgroundTextureArabicHook hook.\n");
+        Log("[DLL] Failed: InstallSetEquipBackgroundTextureArabicHook\n");
 
     if (!InstallMbDvcSideOpsCallbackImplUpdateInformationTextBoxArabicHook(hGame))
-        Log("[DLL] Failed to install InstallMbDvcSideOpsCallbackImplUpdateInformationTextBoxArabicHook hook.\n");
+        Log("[DLL] Failed: InstallMbDvcSideOpsCallbackImplUpdateInformationTextBoxArabicHook\n");
 }
 
-/* Removes all enabled hooks. Parameters: none. */
 static void RemoveAll()
 {
     Uninstall_SetLuaFunctions_Hook();
@@ -495,8 +478,8 @@ static void RemoveAll()
     RemoveItemSelectorRecordCallFuncUpdateRecordsArabicHook();
     RemoveMbDvcSideOpsCallbackImplShowCompleteRatioArabicTextHook();
     RemoveTppUICountAnnounceImplSetAnnounceTextArabicHook();
-   RemoveLoadingTipsEvGetTitleTextArabicHook();
-   RemoveLoadingTipsEvUpdateActPhaseArabicLeftToRightAlignHook();
+    RemoveLoadingTipsEvGetTitleTextArabicHook();
+    RemoveLoadingTipsEvUpdateActPhaseArabicLeftToRightAlignHook();
     RemoveEquipCrossEvCallSetCircleCursorFromSrickDirArabicLeftToRightAlignHook();
     RemoveMbDvcMissionListCallbackImplShowMissionInfoTextBoxArabicLeftToRightAlignHook();
     RemoveGameOverEvCallUpdateSelectTextArabicLeftToRightAlignHook();
@@ -505,83 +488,60 @@ static void RemoveAll()
     RemoveMbDvcSideOpsCallbackImplUpdateInformationTextBoxArabicHook();
 }
 
-// Opens the debug console only in Debug builds.
-static void OpenDebugConsoleIfNeeded()
+static DWORD WINAPI InitThread(LPVOID)
 {
     #ifdef _DEBUG
-    if (GetConsoleWindow() == nullptr)
-    {
-        AllocConsole();
-        FILE* dummy = nullptr;
-        freopen_s(&dummy, "CONOUT$", "w", stdout);
-        freopen_s(&dummy, "CONOUT$", "w", stderr);
-        freopen_s(&dummy, "CONIN$", "r", stdin);
-    }
-    #endif
-}
-
-
-/* Initializes hooks once. Parameters: hGame = main game module handle. */
-extern "C" __declspec(dllexport) bool InitializeHooks(HMODULE hGame)
-{
-    if (gInitialized.load())
-        return true;
-
-    if (!hGame)
-        return false;
-
-    #if _DEBUG
+    SetupConsole();
     InitLog();
-    #endif // _DEBUG
+    #endif
 
-    Log("[VRL] InitializeHooks begin.\n");
+    Log("[DLL] InitThread started.\n");
+
+    HMODULE hGame = GetModuleHandleW(nullptr);
+    if (!hGame)
+    {
+        Log("[DLL] GetModuleHandleW(nullptr) failed.\n");
+        return 0;
+    }
 
     if (!ResolveAddressSet(hGame))
     {
-        Log("[VRL] ResolveAddressSet failed.\n");
-        CloseLog();
-        return false;
+        Log("[DLL] ResolveAddressSet failed.\n");
+        return 0;
     }
 
     const MH_STATUS st = MH_Initialize();
+    Log("[DLL] MH_Initialize -> %d\n", static_cast<int>(st));
     if (st != MH_OK && st != MH_ERROR_ALREADY_INITIALIZED)
-    {
-        Log("[VRL] MH_Initialize failed: %d\n", static_cast<int>(st));
-        CloseLog();
-        return false;
-    }
+        return 0;
 
     InstallAll(hGame);
 
     gInitialized.store(true);
-    Log("[VRL] InitializeHooks done.\n");
-    return true;
+    Log("[DLL] InitThread done.\n");
+    return 0;
 }
 
-/* Shuts everything down once. Parameters: none. */
-extern "C" __declspec(dllexport) void ShutdownHooks()
+static void UninstallAll(bool processTerminating)
 {
-    if (!gInitialized.load())
+    if (processTerminating)
         return;
 
-    Log("[VRL] ShutdownHooks begin.\n");
+    if (gInitialized.load())
+    {
+        RemoveAll();
+        MH_Uninitialize();
+        gInitialized.store(false);
+        Log("[DLL] UninstallAll done.\n");
+    }
 
-    RemoveAll();
-    MH_Uninitialize();
+    #if VRL_ENABLE_DINPUT8_PROXY
+    FreeRealDInput8();
+    #endif
 
-    gInitialized.store(false);
-    gInitStarted.store(false);
-
-    Log("[VRL] ShutdownHooks done.\n");
+    fflush(stdout);
+    fflush(stderr);
     CloseLog();
-}
-
-/* Worker thread for startup. Parameters: unused. */
-static DWORD WINAPI InitThread(LPVOID)
-{
-    HMODULE hGame = GetModuleHandleW(nullptr);
-    InitializeHooks(hGame);
-    return 0;
 }
 
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved)
@@ -591,23 +551,23 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved)
     case DLL_PROCESS_ATTACH:
     {
         DisableThreadLibraryCalls(hModule);
-        InitLog();
+
+        bool expected = false;
+        if (!gStarted.compare_exchange_strong(expected, true))
+            return TRUE;
 
         #if VRL_ENABLE_DINPUT8_PROXY
+        InitLog();
         if (!LoadRealDInput8IfNeeded(hModule))
             return FALSE;
         #endif
 
         #if VRL_ENABLE_AUTO_INIT_THREAD
-        bool expected = false;
-        if (!gInitStarted.compare_exchange_strong(expected, true))
-            return TRUE;
-
         HANDLE hThread = CreateThread(nullptr, 0, InitThread, nullptr, 0, nullptr);
         if (hThread)
             CloseHandle(hThread);
         #else
-        InitializeHooks(GetModuleHandleW(nullptr));
+        InitThread(nullptr);
         #endif
 
         return TRUE;
@@ -615,13 +575,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved)
 
     case DLL_PROCESS_DETACH:
     {
-        if (lpReserved == nullptr)
-            ShutdownHooks();
-
-        #if VRL_ENABLE_DINPUT8_PROXY
-        FreeRealDInput8();
-        #endif
-
+        UninstallAll(lpReserved != nullptr);
         return TRUE;
     }
     }
