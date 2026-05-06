@@ -96,47 +96,46 @@ static const AddressSet kEnglish = {
 };
 
 static const AddressSet kJapanese = {
-    0x0ull, // IsArabLanguage
-    0x0ull, // GetFtexPathId
-    0x0ull, // GetGameLanguageState
-    0x0ull, // SetGameLanguageState
-    0x0ull, // GameConfigGetInstance
-    0x0ull, // FixKorCh_Fun145cc6360
-    0x0ull, // SetSelectLangList
-    0x0ull, // UpdateLangList
-    0x0ull, // DecideLangList
-    0x0ull, // UpdateLangPopup
-    0x0ull, // ChangeLanguage
-    0x0ull, // ApplyFormVariation
-    0x0ull, // FoxStringCtor
-    0x0ull, // StdFree
-    0x0ull, // PathCInitWithString
-    0x0ull, // PathAssign
-    0x0ull, // PathDtor
-    0x0ull, // LoadPageBlock
-    0x0ull, // UnkLoadTppPartsLangFpk
-    0x0ull, // UnkLoadUIDefaultDataFunc
-    0x0ull, // GetUiUtility
-    0x0ull, // GetTipsLangBlockPath
-    0x0ull, // GetPauseHelpLangBlockPath
-    0x0ull, // ShowTextureLogo
-    0x0ull, // CommonDataManager_GetInstance
-    0x0ull, // CommonDataManager_SetDispLogo
-    0x0ull, // UiLangInit
-    0x0ull, // FileRegisterLoadFunc
-    0x0ull, // LangLoadFuncHandler
-    0x0ull, // SetLuaFunctions
-    0x0ull, // FoxLuaRegisterLibrary
-    0x0ull, // lua_tolstring
-    0x0ull, // lua_tointeger
-    0x0ull, // lua_pushnumber
-    0x0ull, // GetStringId
-    0x0ull, // LuaCheckGlueString
-    0x0ull, // LuaToGlueString
-    0x0ull, // lua_isstring
-    0x0ull, // lua_isnumber
-    0x0ull, // lua_tonumber
-    0x0ull, // CreateTextUnits
+    0x147A7A2A0ull, // IsArabLanguage
+    0x1408D0020ull, // GetFtexPathId
+    0x147CB5E90ull, // GetGameLanguageState
+    0x14094E370ull, // SetGameLanguageState
+    0x143205C8Cull, // GameConfigGetInstance
+    0x1477E2760ull, // FixKorCh_Fun145cc6360
+    0x14AE15510ull, // SetSelectLangList
+    0x1416063C0ull, // UpdateLangList
+    0x14AE13B50ull, // DecideLangList
+    0x141606600ull, // UpdateLangPopup
+    0x14090EB60ull, // ChangeLanguage
+    0x1404E1940ull, // ApplyFormVariation
+    0x1400163E0ull, // FoxStringCtor
+    0x140004200ull, // StdFree
+    0x1400858A0ull, // PathCInitWithString
+    0x140085770ull, // PathAssign
+    0x140085730ull, // PathDtor
+    0x140928730ull, // LoadPageBlock
+    0x14095C490ull, // UnkLoadTppPartsLangFpk
+    0x147B98120ull, // UnkLoadUIDefaultDataFunc
+    0x140939430ull, // GetUiUtility
+    0x147CBBC10ull, // GetTipsLangBlockPath
+    0x1479196C0ull, // GetPauseHelpLangBlockPath
+    0x1408df9C0ull, // ShowTextureLogo
+    0x147719930ull, // CommonDataManager_GetInstance
+    0x140866fb0ull, // CommonDataManager_SetDispLogo
+    0x14ddee340ull, // UiLangInit
+    0x1400CF0C0ull, // FileRegisterLoadFunc
+    0x141CD72E0ull, // LangLoadFuncHandler
+    0x1408D72B0ull, // SetLuaFunctions
+    0x14006B810ull, // FoxLuaRegisterLibrary
+    0x141A124E0ull, // lua_tolstring
+    0x141A124B0ull, // lua_tointeger
+    0x141A11CE0ull, // lua_pushnumber
+    0x1409131D0ull, // GetStringId
+    0x1400F1EB0ull, // LuaCheckGlueString
+    0x1400F2330ull, // LuaToGlueString
+    0x141A117D0ull, // lua_isstring
+    0x141A117A0ull, // lua_isnumber
+    0x141a12580ull, // lua_tonumber
     
 
 
@@ -145,6 +144,7 @@ static const AddressSet kJapanese = {
     //ARABIC
     0x0ull, // SetDisplayText
     0x0ull, // SetMainText
+    0x0ull, // CreateTextUnits
     0x0ull, // SetupListElementWalkerGear
     0x0ull, // SetupMenuText
     0x0ull, // SetMenuInfoText
