@@ -25,11 +25,28 @@ struct LanguageEntry
     const char* name;
 };
 
-static std::vector<LanguageEntry> g_LanguagesToAdd = {
+static std::vector<LanguageEntry> g_LanguagesToAdd_EN = {
     { 6,  0x00FB22736BF48BULL, "Arabic"  },
     { 9,  0x007FF8A9A9E6A7ULL, "Chinese" },
     { 10, 0x00A886C2115A2DULL, "Korean"  },
 };
+
+static std::vector<LanguageEntry> g_LanguagesToAdd_JP = {
+    { 1,  0x0000BCA307B43F74ULL, "French"     },
+    { 2,  0x00004AB979161F0EULL, "Italian"    },
+    { 3,  0x00003D17FA66A98BULL, "German"     },
+    { 4,  0x0000C09539A70C24ULL, "Spanish"    },
+    { 5,  0x00008FDFE0F19226ULL, "Portuguese" },
+    { 6,  0x00FB22736BF48BULL,   "Arabic"     },
+    { 7,  0x000023CC1FB778B4ULL, "Russian"    },
+    { 9,  0x007FF8A9A9E6A7ULL,   "Chinese"    },
+    { 10, 0x00A886C2115A2DULL,   "Korean"     },
+};
+
+static const std::vector<LanguageEntry>& GetLanguagesToAdd()
+{
+    return gGameBuild == GameBuild::Japanese ? g_LanguagesToAdd_JP : g_LanguagesToAdd_EN;
+}
 
 // -------------------- Globals --------------------
 static void* g_TargetAddress = nullptr;
@@ -106,8 +123,9 @@ void __fastcall Detour_TargetInit(void* param_1)
         return;
     }
 
+    const std::vector<LanguageEntry>& langs = GetLanguagesToAdd();
     int32_t count = GetStoredCount(param_1);
-    const int32_t numToAdd = static_cast<int32_t>(g_LanguagesToAdd.size());
+    const int32_t numToAdd = static_cast<int32_t>(langs.size());
 
     Log("[LangHook] Stored count=%d, adding %d\n", count, numToAdd);
 
@@ -120,13 +138,13 @@ void __fastcall Detour_TargetInit(void* param_1)
     for (int i = 0; i < numToAdd; ++i)
     {
         uint64_t* entry = GetTableEntry(param_1, count + i);
-        entry[0] = g_LanguagesToAdd[i].key;
-        entry[1] = g_LanguagesToAdd[i].value;
+        entry[0] = langs[i].key;
+        entry[1] = langs[i].value;
 
         Log("[LangHook] Added %s (key=%llu, value=0x%llX)\n",
-            g_LanguagesToAdd[i].name,
-            static_cast<unsigned long long>(g_LanguagesToAdd[i].key),
-            static_cast<unsigned long long>(g_LanguagesToAdd[i].value));
+            langs[i].name,
+            static_cast<unsigned long long>(langs[i].key),
+            static_cast<unsigned long long>(langs[i].value));
     }
 
     SetStoredCount(param_1, count + numToAdd);
