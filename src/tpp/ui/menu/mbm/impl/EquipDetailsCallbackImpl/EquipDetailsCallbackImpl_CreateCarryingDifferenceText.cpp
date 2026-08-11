@@ -108,7 +108,7 @@ static std::string RewriteCarryingDifferenceTextArabic(const std::string& src)
             return src;
     }
 
-    return diffPart + " " + numberPart;
+    return diffPart + numberPart;
 }
 
 /* Applies the Arabic reorder to the already-built output buffer. outText = destination buffer from the game. */
@@ -125,11 +125,12 @@ static void ApplyArabicCarryingDifferenceFix(char* outText)
     if (after == before)
         return;
 
-    if (!SafeWriteCString(outText, 0x80, after.c_str()))
+    if (after.size() > before.size())
         return;
 
-    Log("[EquipDetailsCallbackImpl::CreateCarryingDifferenceText] before: %s\n", before.c_str());
-    Log("[EquipDetailsCallbackImpl::CreateCarryingDifferenceText] after : %s\n", after.c_str());
+    if (!SafeWriteCString(outText, before.size() + 1, after.c_str()))
+        return;
+
 }
 
 /* Hook for CreateCarryingDifferenceText(this, outText, currentValue, baseValue). */

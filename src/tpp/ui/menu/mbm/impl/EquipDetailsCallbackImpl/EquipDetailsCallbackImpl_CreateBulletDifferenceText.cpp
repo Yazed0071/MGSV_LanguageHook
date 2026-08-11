@@ -138,8 +138,6 @@ static void ApplyArabicBulletDifferenceFix(char* outText)
     if (!SafeWriteCString(outText, 0x80, after.c_str()))
         return;
 
-    Log("[EquipDetailsCallbackImpl::CreateBulletDifferenceText] before: %s\n", before.c_str());
-    Log("[EquipDetailsCallbackImpl::CreateBulletDifferenceText] after : %s\n", after.c_str());
 }
 
 /* Hook for CreateBulletDifferenceText(this, outText, valueA, valueB, baseA, baseB). */

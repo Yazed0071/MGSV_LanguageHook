@@ -42,6 +42,7 @@ bool InstallMissionPreparationCallbackImplSetupMissionNameArabicHook(HMODULE hGa
 bool InstallEquipDetailsCallbackImplCreateCarryingDifferenceTextArabicHook(HMODULE hGame);
 bool InstallEquipDetailsCallbackImplCreateBulletDifferenceTextArabicHook(HMODULE hGame);
 bool InstallTppUIInfoTypingTextImplSetTypingTextArabicHook(HMODULE hGame);
+bool InstallTppUIInfoTypingTextUpdateTextRtlHook(HMODULE hGame);
 bool InstallLoadoutPanelInfoRefreshLoadoutTextArabicHook(HMODULE hGame);
 bool InstallItemSelectorRecordCallFuncUpdateRecordsArabicHook(HMODULE hGame);
 bool InstallMbDvcSideOpsCallbackImplShowCompleteRatioArabicTextHook(HMODULE hGame);
@@ -54,6 +55,7 @@ bool InstallGameOverEvCallUpdateSelectTextArabicLeftToRightAlignHook(HMODULE hGa
 bool InstallPopupEvCallSettingPopupArabicLeftToRightAlignHook(HMODULE hGame);
 bool InstallSetEquipBackgroundTextureArabicHook(HMODULE hGame);
 bool InstallMbDvcSideOpsCallbackImplUpdateInformationTextBoxArabicHook(HMODULE hGame);
+bool InstallArabicScrollReversalHook(HMODULE hGame);
 
 void RemoveGameLangStateKeepCJKHook();
 void RemoveLangSelectPopupPagedRewriteHooks();
@@ -83,6 +85,7 @@ void RemoveMissionPreparationCallbackImplSetupMissionNameArabicHook();
 void RemoveEquipDetailsCallbackImplCreateCarryingDifferenceTextArabicHook();
 void RemoveEquipDetailsCallbackImplCreateBulletDifferenceTextArabicHook();
 void RemoveTppUIInfoTypingTextImplSetTypingTextArabicHook();
+void RemoveTppUIInfoTypingTextUpdateTextRtlHook();
 void RemoveLoadoutPanelInfoRefreshLoadoutTextArabicHook();
 void RemoveItemSelectorRecordCallFuncUpdateRecordsArabicHook();
 void RemoveMbDvcSideOpsCallbackImplShowCompleteRatioArabicTextHook();
@@ -95,6 +98,7 @@ void RemoveGameOverEvCallUpdateSelectTextArabicLeftToRightAlignHook();
 void RemovePopupEvCallSettingPopupArabicLeftToRightAlignHook();
 void RemoveSetEquipBackgroundTextureArabicHook();
 void RemoveMbDvcSideOpsCallbackImplUpdateInformationTextBoxArabicHook();
+void RemoveArabicScrollReversalHook();
 
 namespace
 {
@@ -347,8 +351,6 @@ static void InstallAll(HMODULE hGame)
     if (!InstallGetTipsLangBlockPathHook(hGame))
         Log("[DLL] Failed: InstallGetTipsLangBlockPathHook\n");
 
-    if (!InstallGetPauseHelpLangBlockPathHook(hGame))
-        Log("[DLL] Failed: InstallGetPauseHelpLangBlockPathHook\n");
 
     if (!InstallDisplayTimerEvCallSetDisplayTextHook(hGame))
         Log("[DLL] Failed: InstallDisplayTimerEvCallSetDisplayTextHook\n");
@@ -401,11 +403,11 @@ static void InstallAll(HMODULE hGame)
     if (!InstallEquipDetailsCallbackImplCreateCarryingDifferenceTextArabicHook(hGame))
         Log("[DLL] Failed: InstallEquipDetailsCallbackImplCreateCarryingDifferenceTextArabicHook\n");
 
-    if (!InstallEquipDetailsCallbackImplCreateBulletDifferenceTextArabicHook(hGame))
-        Log("[DLL] Failed: InstallEquipDetailsCallbackImplCreateBulletDifferenceTextArabicHook\n");
-
     if (!InstallTppUIInfoTypingTextImplSetTypingTextArabicHook(hGame))
         Log("[DLL] Failed: InstallTppUIInfoTypingTextImplSetTypingTextArabicHook\n");
+
+    if (!InstallTppUIInfoTypingTextUpdateTextRtlHook(hGame))
+        Log("[DLL] Failed: InstallTppUIInfoTypingTextUpdateTextRtlHook\n");
 
     if (!InstallLoadoutPanelInfoRefreshLoadoutTextArabicHook(hGame))
         Log("[DLL] Failed: InstallLoadoutPanelInfoRefreshLoadoutTextArabicHook\n");
@@ -442,6 +444,9 @@ static void InstallAll(HMODULE hGame)
 
     if (!InstallMbDvcSideOpsCallbackImplUpdateInformationTextBoxArabicHook(hGame))
         Log("[DLL] Failed: InstallMbDvcSideOpsCallbackImplUpdateInformationTextBoxArabicHook\n");
+
+    if (!InstallArabicScrollReversalHook(hGame))
+        Log("[DLL] Failed: InstallArabicScrollReversalHook\n");
 }
 
 static void RemoveAll()
@@ -454,7 +459,6 @@ static void RemoveAll()
     RemoveChapterTelopArabicFtexHook();
     RemoveUnkLoadTppPartsLangFpkArabicFixHook();
     RemoveGetTipsLangBlockPathHook();
-    RemoveGetPauseHelpLangBlockPathHook();
     RemoveDisplayTimerEvCallSetDisplayTextHook();
     RemoveMbLogViewerBodyLayoutSetMainTextArabicHook();
     RemoveCustomizeSlotSelectorSetupListElementWalkerGearHook();
@@ -472,8 +476,8 @@ static void RemoveAll()
     RemoveMbDvcSideOpsRecordCallFuncViewRecordArabicHook();
     RemoveMissionPreparationCallbackImplSetupMissionNameArabicHook();
     RemoveEquipDetailsCallbackImplCreateCarryingDifferenceTextArabicHook();
-    RemoveEquipDetailsCallbackImplCreateBulletDifferenceTextArabicHook();
     RemoveTppUIInfoTypingTextImplSetTypingTextArabicHook();
+    RemoveTppUIInfoTypingTextUpdateTextRtlHook();
     RemoveLoadoutPanelInfoRefreshLoadoutTextArabicHook();
     RemoveItemSelectorRecordCallFuncUpdateRecordsArabicHook();
     RemoveMbDvcSideOpsCallbackImplShowCompleteRatioArabicTextHook();
@@ -486,14 +490,15 @@ static void RemoveAll()
     RemovePopupEvCallSettingPopupArabicLeftToRightAlignHook();
     RemoveSetEquipBackgroundTextureArabicHook();
     RemoveMbDvcSideOpsCallbackImplUpdateInformationTextBoxArabicHook();
+    RemoveArabicScrollReversalHook();
 }
 
 static DWORD WINAPI InitThread(LPVOID)
 {
     #ifdef _DEBUG
     SetupConsole();
-    InitLog();
     #endif
+    InitLog();
 
     Log("[DLL] InitThread started.\n");
 

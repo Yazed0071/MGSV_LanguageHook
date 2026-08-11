@@ -110,6 +110,7 @@
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;MSGVHOOK_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
@@ -129,6 +130,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;MSGVHOOK_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
@@ -176,6 +178,7 @@
     <ClCompile Include="src\tpp\ui\hud\HeadMarkMarkerEvCall\HeadMarkMarkerEvCall_SetMarkerText.cpp" />
     <ClCompile Include="src\tpp\ui\hud\impl\TppUICountAnnounceImpl\TppUICountAnnounceImpl_SetAnnounceText.cpp" />
     <ClCompile Include="src\tpp\ui\hud\impl\TppUIInfoTypingTextImpl\TppUIInfoTypingTextImpl_SetTypingText.cpp" />
+    <ClCompile Include="src\tpp\ui\hud\impl\TppUIInfoTypingTextImpl\TppUIInfoTypingText_UpdateTextRtl.cpp" />
     <ClCompile Include="src\tpp\ui\hud\impl\TppUILangSelectPopupImpl\FixKorCh.cpp" />
     <ClCompile Include="src\tpp\ui\hud\impl\TppUILangSelectPopupImpl\FUN_145cc6360.cpp" />
     <ClCompile Include="src\tpp\ui\hud\impl\TppUILangSelectPopupImpl\TppUILangSelectPopupImpl.cpp" />
@@ -212,6 +215,7 @@
     <ClCompile Include="src\tpp\ui\UiCommand\ShowChapterTelop.cpp" />
     <ClCompile Include="src\tpp\ui\UiCommand\ShowTextureLogo.cpp" />
     <ClCompile Include="src\tpp\ui\lang\UnkLoadUIDefaultDataFunc.cpp" />
+    <ClCompile Include="src\tpp\ui\ModelNodeText\ArabicScrollReversal.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Library Include="lib\libMinHook.x64.lib" />

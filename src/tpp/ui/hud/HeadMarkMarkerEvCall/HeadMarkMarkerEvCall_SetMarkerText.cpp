@@ -1,10 +1,12 @@
-// HeadMarkMarker_SetMarkerText_ArabicFix.cpp
+﻿// HeadMarkMarker_SetMarkerText_ArabicFix.cpp
 
 #include <windows.h>
 #include <cstdint>
 #include <cstring>
 #include <string>
 #include <vector>
+#include <unordered_map>
+#include <mutex>
 #include <cstdio>
 #include "MinHook.h"
 #include "log.h"
@@ -65,6 +67,9 @@ static GetLangText_t gGetLangText = nullptr;
 static SetTextForModelNodeText_t gSetTextForModelNodeText = nullptr;
 
 static void* gTarget = nullptr;
+
+static std::unordered_map<void*, std::string> gMarkerBuf;
+static std::mutex gMarkerMtx;
 
 // ------------------------------------------------------------
 // UTF-8 helpers
@@ -208,9 +213,8 @@ static std::string BuildFullMarkerText(void* markerObj)
         return s ? std::string(s) : std::string();
     }
 
-    // Distance case: original used "%d%s" with "m"
     char buf[0x36] = {};
-    //std::snprintf(buf, sizeof(buf), "%u%s", static_cast<unsigned>(dist), "m");
+    std::snprintf(buf, sizeof(buf), "%u%s", static_cast<unsigned>(dist), "\xD9\x85"); // "\xD9\x85" = "م"
     return std::string(buf);
 }
 
@@ -242,15 +246,20 @@ static void FixArabicMarkerReveal(void* owner, void* markerObj)
         visibleText = fullText;
 
     char* outBuf = reinterpret_cast<char*>(base + 0xE1);
-    if (!SafeWriteCString(outBuf, 0x36, visibleText.c_str()))
-        return;
+    SafeWriteCString(outBuf, 0x36, visibleText.c_str());
+
+    const char* textPtr = nullptr;
+    {
+        std::lock_guard<std::mutex> lk(gMarkerMtx);
+        std::string& stored = gMarkerBuf[markerObj];
+        stored.assign(visibleText);
+        textPtr = stored.c_str();
+    }
 
     void* textUnit = reinterpret_cast<uint8_t*>(owner) + 0xF8;
 
-    gSetTextForModelNodeText(nodeA, textUnit, outBuf, 1);
-    gSetTextForModelNodeText(nodeB, textUnit, outBuf, 1);
-
-    Log("[HeadMarkMarker::SetMarkerText] Arabic marker rebuilt: %s\n", outBuf);
+    gSetTextForModelNodeText(nodeA, textUnit, textPtr, 1);
+    gSetTextForModelNodeText(nodeB, textUnit, textPtr, 1);
 }
 
 // ------------------------------------------------------------
@@ -320,6 +329,11 @@ void RemoveHeadMarkMarkerEvCallSetMarkerTextArabicHook()
     oSetMarkerText = nullptr;
     gGetLangText = nullptr;
     gSetTextForModelNodeText = nullptr;
+
+    {
+        std::lock_guard<std::mutex> lk(gMarkerMtx);
+        gMarkerBuf.clear();
+    }
 
     Log("[HeadMarkMarker::SetMarkerText] Removed.\n");
 }

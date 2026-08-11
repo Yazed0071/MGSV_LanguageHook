@@ -9,46 +9,46 @@ GameBuild gGameBuild = GameBuild::Unknown;
 AddressSet gAddr{};
 
 static const AddressSet kEnglish = {
-    0x145F134E0ull, // IsArabLanguage
-    0x1408D05F0ull, // GetFtexPathId
-    0x146084A80ull, // GetGameLanguageState
-    0x14094E950ull, // SetGameLanguageState
-    0x14052F9C0ull, // GameConfigGetInstance
-    0x145CC6360ull, // FixKorCh_Fun145cc6360
-    0x14A4140D0ull, // SetSelectLangList
-    0x141606250ull, // UpdateLangList
-    0x14A412670ull, // DecideLangList
-    0x141606490ull, // UpdateLangPopup
-    0x14090F130ull, // ChangeLanguage
-    0x1404E1E60ull, // ApplyFormVariation
-    0x1400163F0ull, // FoxStringCtor
-    0x140004200ull, // StdFree
-    0x140085780ull, // PathCInitWithString
-    0x140085650ull, // PathAssign
-    0x140085610ull, // PathDtor
-    0x140928D10ull, // LoadPageBlock
-    0x14095CA10ull, // UnkLoadTppPartsLangFpk
-    0x145F86420ull, // UnkLoadUIDefaultDataFunc
-    0x140939A20ull, // GetUiUtility
-    0x146089BD0ull, // GetTipsLangBlockPath
-    0x145DDE150ull, // GetPauseHelpLangBlockPath
-    0x1408DFFB0ull, // ShowTextureLogo
-    0x140865D00ull, // CommonDataManager_GetInstance
-    0x140867330ull, // CommonDataManager_SetDispLogo
-    0x14D750C70ull, // UiLangInit
-    0x1400CEF90ull, // FileRegisterLoadFunc
-    0x141DF67B0ull, // LangLoadFuncHandler
-    0x1408D78A0ull, // SetLuaFunctions
-    0x14006B6D0ull, // FoxLuaRegisterLibrary
-    0x141A123C0ull, // lua_tolstring
-    0x141A12390ull, // lua_tointeger
-    0x141A11BC0ull, // lua_pushnumber
-    0x1409137A0ull, // GetStringId
-    0x1400F1D50ull, // LuaCheckGlueString
-    0x1400F21D0ull, // LuaToGlueString
-    0x141A116B0ull, // lua_isstring
-    0x141A11680ull, // lua_isnumber
-    0x141A12460ull, // lua_tonumber
+    0x140915700ull, // IsArabLanguage
+    0x1408D0F60ull, // GetFtexPathId
+    0x14094E6F0ull, // GetGameLanguageState
+    0x14094F410ull, // SetGameLanguageState
+    0x140530200ull, // GameConfigGetInstance
+    0x140896390ull, // FixKorCh_Fun140896390 (15.4 EN: KeySettingEvCall::StartSub)
+    0x141604C50ull, // SetSelectLangList
+    0x1416050D0ull, // UpdateLangList
+    0x141604740ull, // DecideLangList
+    0x141604BF0ull, // UpdateLangPopup
+    0x1408CE490ull, // ChangeLanguage
+    0x1404E1AF0ull, // ApplyFormVariation
+    0x140016490ull, // FoxStringCtor
+    0x1400041C0ull, // StdFree
+    0x1400858D0ull, // PathCInitWithString
+    0x1400857A0ull, // PathAssign
+    0x140085760ull, // PathDtor
+    0x140929760ull, // LoadPageBlock
+    0x14095D4E0ull, // UnkLoadTppPartsLangFpk
+    0x140929690ull, // UnkLoadUIDefaultDataFunc
+    0x14093A480ull, // GetUiUtility
+    0x14094E940ull, // GetTipsLangBlockPath
+    0x1408E8A60ull, // GetPauseHelpLangBlockPath
+    0x1408E0900ull, // ShowTextureLogo
+    0x140866910ull, // CommonDataManager_GetInstance
+    0x140867F50ull, // CommonDataManager_SetDispLogo
+    0x0ull,         // UiLangInit
+    0x0ull,         // FileRegisterLoadFunc
+    0x0ull,         // LangLoadFuncHandler
+    0x14065CC80ull, // SetLuaFunctions
+    0x14006B8C0ull, // FoxLuaRegisterLibrary
+    0x141A12150ull, // lua_tolstring
+    0x141A12120ull, // lua_tointeger
+    0x141A11950ull, // lua_pushnumber
+    0x1409140E0ull, // GetStringId
+    0x1400F16A0ull, // LuaCheckGlueString
+    0x1400F1B20ull, // LuaToGlueString
+    0x141A11440ull, // lua_isstring
+    0x141A11410ull, // lua_isnumber
+    0x141A121F0ull, // lua_tonumber
 
 
 
@@ -56,128 +56,162 @@ static const AddressSet kEnglish = {
 
 
     //ARABIC
-    0x1408BF270ull, // SetDisplayText
-    0x14087ABD0ull, // SetMainText
-    0x141DC36B0ull, // CreateTextUnits
-    0x14A4C14F0ull, // SetupListElementWalkerGear
-    0x140884AE0ull, // SetupMenuText
-    0x145CB1770ull, // SetMenuInfoText
-    0x1460FD9C0ull, // SetMissionInfoTexts
-    0x14A902820ull, // SetCommandText
-    0x140884670ull, // SetPageText 
-    0x1409171D0ull, // SetTextForModelNodeText
-    0x1408A8DC0ull, // TelopStartTitleEvCallUpdate
-    0x145D05D19ull, // SetTextMissionTelopNameEpisodeSnprintfCall
-    0x14093E510ull, // CallLogView
-    0x1408B8CE0ull, // SetMarkerText
-    0x145C5DBE0ull, // GetTypingText
-    0x145C5FCD0ull, // SetMenuNameText
-    0x1409122D0ull, // GetLangText
-    0x140F33E20ull, // MbDvcMissionListRecordCallFuncStart
-    0x149476B10ull, // MbDvcSideOpsRecordCallFuncViewRecord
-    0x1416C1080ull, // MissionPreparationCallbackImpl_SetupMissionName
-    0x14A4D94F0ull, // EquipDetailsCallbackImpl_CreateCarryingDifferenceText
-    0x14A4D8E70ull, // EquipDetailsCallbackImpl_CreateBulletDifferenceText
-    0x141604540ull, // TppUIInfoTypingTextImpl_SetTypingText
-    0x14A5A9D90ull, // LoadoutPanelInfo_RefreshLoadoutText
-    0x1416AF270ull, // ItemSelectorRecordCallFunc_UpdateRecords
-    0x149473B60ull, // MbDvcSideOpsCallbackImpl_ShowCompleteRatio
-    0x14A3EAE70ull, // TppUICountAnnounceImpl_SetAnnounceText
-    0x145CCDC10ull, // LoadingTipsEv_GetTitleText
-    0x145CCFCC0ull, // LoadingTipsEv_UpdateActPhase
-    0x1408B14C0ull, // EquipCrossEvCall_SetCircleCursorFromSrickDir
-    0x140F33780ull, // MbDvcMissionListCallbackImpl_ShowMissionInfoTextBox
-    0x145CB9470ull, // GameOverEvCall_UpdateSelectText
-    0x1408979C0ull, // PopupEvCall_SettingPopup
-    0x145F236F0ull, // SetEquipBackgroundTexture
-    0x141DC78F0ull, // ModelNodeMesh_SetTextureName
-    0x149475810ull, // MbDvcSideOpsCallbackImpl_UpdateInformationTextBox
-    
+    0x1408BF9B0ull, // SetDisplayText
+    0x14087B700ull, // SetMainText
+    0x141DC3AA0ull, // CreateTextUnits
+    0x1416510F0ull, // SetupListElementWalkerGear
+    0x140885320ull, // SetupMenuText
+    0x140884E00ull, // SetMenuInfoText
+    0x140962180ull, // SetMissionInfoTexts
+    0x14179B340ull, // SetCommandText
+    0x140884EB0ull, // SetPageText
+    0x140917B10ull, // SetTextForModelNodeText
+    0x1408A9500ull, // TelopStartTitleEvCallUpdate
+    0x1408A9219ull, // SetTextMissionTelopNameEpisodeSnprintfCall
+    0x14093EF80ull, // CallLogView
+    0x1408B9410ull, // SetMarkerText
+    0x14087DAD0ull, // GetTypingText
+    0x14087E2F0ull, // SetMenuNameText
+    0x140912C10ull, // GetLangText
+    0x140F33800ull, // MbDvcMissionListRecordCallFuncStart
+    0x140F40D70ull, // MbDvcSideOpsRecordCallFuncViewRecord
+    0x1416C00D0ull, // MissionPreparationCallbackImpl_SetupMissionName
+    0x141660270ull, // EquipDetailsCallbackImpl_CreateCarryingDifferenceText
+    0x141660130ull, // EquipDetailsCallbackImpl_CreateBulletDifferenceText
+    0x1416033C0ull, // TppUIInfoTypingTextImpl_SetTypingText
+    0x1416D64D0ull, // LoadoutPanelInfo_RefreshLoadoutText
+    0x1416AE280ull, // ItemSelectorRecordCallFunc_UpdateRecords
+    0x140F3FDC0ull, // MbDvcSideOpsCallbackImpl_ShowCompleteRatio
+    0x1415EC880ull, // TppUICountAnnounceImpl_SetAnnounceText
+    0x140899A30ull, // LoadingTipsEv_GetTitleText
+    0x14089A700ull, // LoadingTipsEv_UpdateActPhase
+    0x1408B1CF0ull, // EquipCrossEvCall_SetCircleCursorFromSrickDir
+    0x140F33160ull, // MbDvcMissionListCallbackImpl_ShowMissionInfoTextBox
+    0x1408886E0ull, // GameOverEvCall_UpdateSelectText
+    0x140898100ull, // PopupEvCall_SettingPopup
+    0x140918030ull, // SetEquipBackgroundTexture
+    0x141DC7CE0ull, // ModelNodeMesh_SetTextureName
+    0x140F404A0ull, // MbDvcSideOpsCallbackImpl_UpdateInformationTextBox
+    0x141DB7E10ull, // ModelNodeText_ScrollDriver
+    0x141DB36A0ull, // ModelNodeText_GetDisplayWidth
+    0x1409175D0ull, // SetAutoScrollTextForModelNodeText
+    0x140917C30ull, // SetTextForModelNodeTextUseAutoScroll
+    0x14091B6D0ull, // SettingTextUnitForScroll
+    0x14087E7A0ull, // SetTrack
+    0x0ull,         // CassetteListCtor
+    0x0ull,         // CassetteListDtor
+    0x140EF67D0ull, // MbDvcTapeListRecordText
+    0x140EF6960ull, // MbDvcTrackListRecordText
+    0x140EFB0A0ull, // CassetteUpdatePlayerPanel
+    0x140F33DB0ull, // MissionTaskRowUpdate (MbDvcMissionTaskListRecordCallFunc::Start)
+    0x140964030ull, // MissionTaskRowUpdate2 (mission-prep task list, hidden-task variant)
+    0x140F0B1A0ull, // UpdateIconInfo (map icon-info / LZ callout box)
+    0x1416041A0ull, // TppUIInfoTypingText_UpdateText (per-line typing reveal)
+    0x141667AE0ull, // EquipDetailsSetupDetails (weapon detail/develop panel)
+    0x14050B580ull, // GetUixUtilityToFeedQuarkEnvironment (Quark node prop/pos setter host)
 };
 
 static const AddressSet kJapanese = {
-    0x147A7A2A0ull, // IsArabLanguage
-    0x1408D0020ull, // GetFtexPathId
-    0x147CB5E90ull, // GetGameLanguageState
-    0x14094E370ull, // SetGameLanguageState
-    0x144A68290ull, // GameConfigGetInstance
-    0x1477E2760ull, // FixKorCh_Fun145cc6360
-    0x1477E1EB0ull, // SetSelectLangList (JP: popup Start() that wraps Event::Start + LangHook)
-    0x1416063C0ull, // UpdateLangList
-    0x14AE13B50ull, // DecideLangList
-    0x141606600ull, // UpdateLangPopup
-    0x14090EB60ull, // ChangeLanguage
-    0x1404E1940ull, // ApplyFormVariation
-    0x1400163E0ull, // FoxStringCtor
-    0x140004200ull, // StdFree
-    0x1400858A0ull, // PathCInitWithString
-    0x140085770ull, // PathAssign
-    0x140085730ull, // PathDtor
-    0x140928730ull, // LoadPageBlock
-    0x14095C490ull, // UnkLoadTppPartsLangFpk
-    0x147B98120ull, // UnkLoadUIDefaultDataFunc
-    0x140939430ull, // GetUiUtility
-    0x147CBBC10ull, // GetTipsLangBlockPath
-    0x1479196C0ull, // GetPauseHelpLangBlockPath
-    0x1408df9C0ull, // ShowTextureLogo
-    0x147719930ull, // CommonDataManager_GetInstance
-    0x140866fb0ull, // CommonDataManager_SetDispLogo
-    0x14ddee340ull, // UiLangInit
-    0x1400CF0C0ull, // FileRegisterLoadFunc
-    0x141CD72E0ull, // LangLoadFuncHandler
-    0x1408D72B0ull, // SetLuaFunctions
-    0x14006B810ull, // FoxLuaRegisterLibrary
-    0x141A124E0ull, // lua_tolstring
-    0x141A124B0ull, // lua_tointeger
-    0x141A11CE0ull, // lua_pushnumber
-    0x1409131D0ull, // GetStringId
-    0x1400F1EB0ull, // LuaCheckGlueString
-    0x1400F2330ull, // LuaToGlueString
-    0x141A117D0ull, // lua_isstring
-    0x141A117A0ull, // lua_isnumber
-    0x141a12580ull, // lua_tonumber
-    
+    0x1409155E0ull, // IsArabLanguage
+    0x1408D0E90ull, // GetFtexPathId
+    0x14094E620ull, // GetGameLanguageState
+    0x14094F340ull, // SetGameLanguageState
+    0x140530610ull, // GameConfigGetInstance
+    0x1408962C0ull, // FixKorCh_Fun140896390 (15.4 EN: KeySettingEvCall::StartSub)
+    0x141604C50ull, // SetSelectLangList
+    0x1416050D0ull, // UpdateLangList
+    0x141604740ull, // DecideLangList
+    0x141604BF0ull, // UpdateLangPopup
+    0x1408CE3C0ull, // ChangeLanguage
+    0x1404E1F50ull, // ApplyFormVariation
+    0x1400164A0ull, // FoxStringCtor
+    0x1400041C0ull, // StdFree
+    0x140085930ull, // PathCInitWithString
+    0x140085800ull, // PathAssign
+    0x1400857C0ull, // PathDtor
+    0x140929660ull, // LoadPageBlock
+    0x14095D410ull, // UnkLoadTppPartsLangFpk
+    0x140929590ull, // UnkLoadUIDefaultDataFunc
+    0x14093A360ull, // GetUiUtility
+    0x14094E870ull, // GetTipsLangBlockPath
+    0x1408E8950ull, // GetPauseHelpLangBlockPath
+    0x1408E0830ull, // ShowTextureLogo
+    0x1408669B0ull, // CommonDataManager_GetInstance
+    0x140868000ull, // CommonDataManager_SetDispLogo
+    0x0ull,         // UiLangInit
+    0x0ull,         // FileRegisterLoadFunc
+    0x0ull,         // LangLoadFuncHandler
+    0x14065CCB0ull, // SetLuaFunctions
+    0x14006B920ull, // FoxLuaRegisterLibrary
+    0x141A120A0ull, // lua_tolstring
+    0x141A12070ull, // lua_tointeger
+    0x141A11890ull, // lua_pushnumber
+    0x140913FC0ull, // GetStringId
+    0x1400F1B80ull, // LuaCheckGlueString
+    0x1400F2000ull, // LuaToGlueString
+    0x141A11380ull, // lua_isstring
+    0x141A11350ull, // lua_isnumber
+    0x141A12140ull, // lua_tonumber
+
+
 
 
 
 
     //ARABIC
-    0x1408BEC90ull, // SetDisplayText
-    0x14087A6F0ull, // SetMainText
-    0x141DC36F0ull, // CreateTextUnits
-    0x14AF43310ull, // SetupListElementWalkerGear
-    0x140884600ull, // SetupMenuText
-    0x1477C8A40ull, // SetMenuInfoText
-    0x147d9BE50ull, // SetMissionInfoTexts
-    0x14B283C40ull, // SetCommandText
-    0x140884190ull, // SetPageText 
-    0x140916C00ull, // SetTextForModelNodeText   
-    0x1408A88E0ull, // TelopStartTitleEvCallUpdate
-    0x147831589ull, // SetTextMissionTelopNameEpisodeSnprintfCall
-    0x147C2A370ull, // CallLogView
-    0x1408B8700ull, // SetMarkerText
-    0x1477B1EE0ull, // GetTypingText
-    0x1477B3990ull, // SetMenuNameText
-    0x140911D00ull, // GetLangText
-    0x140F33F20ull, // MbDvcMissionListRecordCallFuncStart
-    0x149D81200ull, // MbDvcSideOpsRecordCallFuncViewRecord
-    0x1416C11D0ull, // MissionPreparationCallbackImpl_SetupMissionName
-    0x14AF712C0ull, // EquipDetailsCallbackImpl_CreateCarryingDifferenceText
-    0x14DF710F0ull, // EquipDetailsCallbackImpl_CreateBulletDifferenceText
-    0x1416046B0ull, // TppUIInfoTypingTextImpl_SetTypingText
-    0x14B0484A0ull, // LoadoutPanelInfo_RefreshLoadoutText
-    0x1416AF3C0ull, // ItemSelectorRecordCallFunc_UpdateRecords
-    0x149D7D550ull, // MbDvcSideOpsCallbackImpl_ShowCompleteRatio
-    0x14ADEB910ull, // TppUICountAnnounceImpl_SetAnnounceText
-    0x1477EAC00ull, // LoadingTipsEv_GetTitleText
-    0x1477EC6F0ull, // LoadingTipsEv_UpdateActPhase
-    0x1408B0FE0ull, // EquipCrossEvCall_SetCircleCursorFromSrickDir
-    0x140F33880ull, // MbDvcMissionListCallbackImpl_ShowMissionInfoTextBox
-    0x1477D0A00ull, // GameOverEvCall_UpdateSelectText
-    0x140897500ull, // PopupEvCall_SettingPopup
-    0x147A8C170ull, // SetEquipBackgroundTexture
-    0x141DC7930ull, // ModelNodeMesh_SetTextureName
-    0x149D7F7E0ull, // MbDvcSideOpsCallbackImpl_UpdateInformationTextBox
+    0x1408BF8F0ull, // SetDisplayText
+    0x14087B650ull, // SetMainText
+    0x141DC3B00ull, // CreateTextUnits
+    0x1416510D0ull, // SetupListElementWalkerGear
+    0x140885270ull, // SetupMenuText
+    0x140884D50ull, // SetMenuInfoText
+    0x1409620C0ull, // SetMissionInfoTexts
+    0x14179B230ull, // SetCommandText
+    0x140884E00ull, // SetPageText
+    0x1409179F0ull, // SetTextForModelNodeText
+    0x1408A9430ull, // TelopStartTitleEvCallUpdate
+    0x1408A9149ull, // SetTextMissionTelopNameEpisodeSnprintfCall
+    0x14093EE60ull, // CallLogView
+    0x1408B9340ull, // SetMarkerText
+    0x14087DA20ull, // GetTypingText
+    0x14087E240ull, // SetMenuNameText
+    0x140912AF0ull, // GetLangText
+    0x140F33840ull, // MbDvcMissionListRecordCallFuncStart
+    0x140F40DB0ull, // MbDvcSideOpsRecordCallFuncViewRecord
+    0x1416C00B0ull, // MissionPreparationCallbackImpl_SetupMissionName
+    0x141660240ull, // EquipDetailsCallbackImpl_CreateCarryingDifferenceText
+    0x141660100ull, // EquipDetailsCallbackImpl_CreateBulletDifferenceText
+    0x1416033C0ull, // TppUIInfoTypingTextImpl_SetTypingText
+    0x1416D64B0ull, // LoadoutPanelInfo_RefreshLoadoutText
+    0x1416AE250ull, // ItemSelectorRecordCallFunc_UpdateRecords
+    0x140F3FE00ull, // MbDvcSideOpsCallbackImpl_ShowCompleteRatio
+    0x1415EC890ull, // TppUICountAnnounceImpl_SetAnnounceText
+    0x140899950ull, // LoadingTipsEv_GetTitleText
+    0x14089A620ull, // LoadingTipsEv_UpdateActPhase
+    0x1408B1C20ull, // EquipCrossEvCall_SetCircleCursorFromSrickDir
+    0x140F331A0ull, // MbDvcMissionListCallbackImpl_ShowMissionInfoTextBox
+    0x140888630ull, // GameOverEvCall_UpdateSelectText
+    0x140898030ull, // PopupEvCall_SettingPopup
+    0x140917F10ull, // SetEquipBackgroundTexture
+    0x141DC7D40ull, // ModelNodeMesh_SetTextureName
+    0x140F404E0ull, // MbDvcSideOpsCallbackImpl_UpdateInformationTextBox
+    0x141DB7E80ull, // ModelNodeText_ScrollDriver
+    0x141DB3710ull, // ModelNodeText_GetDisplayWidth
+    0x1409174B0ull, // SetAutoScrollTextForModelNodeText
+    0x140917B10ull, // SetTextForModelNodeTextUseAutoScroll
+    0x14091B5B0ull, // SettingTextUnitForScroll
+    0x14087E6F0ull, // SetTrack
+    0x0ull,         // CassetteListCtor
+    0x0ull,         // CassetteListDtor
+    0x140EF6800ull, // MbDvcTapeListRecordText
+    0x140EF6990ull, // MbDvcTrackListRecordText
+    0x140EFB0D0ull, // CassetteUpdatePlayerPanel
+    0x140F33DF0ull, // MissionTaskRowUpdate (MbDvcMissionTaskListRecordCallFunc::Start)
+    0x140963F70ull, // MissionTaskRowUpdate2 (mission-prep task list, hidden-task variant)
+    0x140F0B1D0ull, // UpdateIconInfo (map icon-info / LZ callout box)
+    0x1416041A0ull, // TppUIInfoTypingText_UpdateText (per-line typing reveal)
+    0x141667AB0ull, // EquipDetailsSetupDetails (weapon detail/develop panel)
+    0x14050B9D0ull, // GetUixUtilityToFeedQuarkEnvironment (Quark node prop/pos setter host)
 };
 
 static std::wstring GetModuleDirectory(HMODULE hModule)
@@ -214,9 +248,55 @@ static std::string ToLowerAscii(std::string s)
     return s;
 }
 
+static constexpr const char* kVerifiedEnglishTokens[] = { "day3800", "day3900" };
+static constexpr const char* kVerifiedJapaneseTokens[] = { "day3900" };
+
+template <size_t N>
+static bool TextMatchesAnyToken(const std::string& text, const char* const (&tokens)[N])
+{
+    for (size_t i = 0; i < N; ++i)
+    {
+        if (text.find(tokens[i]) != std::string::npos)
+            return true;
+    }
+    return false;
+}
+
+template <size_t N>
+static std::string JoinTokens(const char* const (&tokens)[N])
+{
+    std::string joined;
+    for (size_t i = 0; i < N; ++i)
+    {
+        if (i != 0)
+            joined += " / ";
+        joined += tokens[i];
+    }
+    return joined;
+}
+
+static uint32_t GetModuleSizeOfImage(HMODULE hModule)
+{
+    if (!hModule)
+        return 0;
+
+    const auto* base = reinterpret_cast<const uint8_t*>(hModule);
+    const auto* dos = reinterpret_cast<const IMAGE_DOS_HEADER*>(base);
+    if (dos->e_magic != IMAGE_DOS_SIGNATURE)
+        return 0;
+
+    const auto* nt = reinterpret_cast<const IMAGE_NT_HEADERS64*>(base + dos->e_lfanew);
+    if (nt->Signature != IMAGE_NT_SIGNATURE)
+        return 0;
+
+    return nt->OptionalHeader.SizeOfImage;
+}
+
 static GameBuild DetectGameBuildFromVersionInfo(HMODULE hGame)
 {
-    const std::wstring dir = GetModuleDirectory(hGame ? hGame : GetModuleHandleW(nullptr));
+    HMODULE module = hGame ? hGame : GetModuleHandleW(nullptr);
+
+    const std::wstring dir = GetModuleDirectory(module);
     if (dir.empty())
         return GameBuild::Unknown;
 
@@ -230,17 +310,38 @@ static GameBuild DetectGameBuildFromVersionInfo(HMODULE hGame)
 
     text = ToLowerAscii(text);
 
+    const uint32_t sizeOfImage = GetModuleSizeOfImage(module);
+
     Log("[AddressSet] version_info.txt = %s\n", text.c_str());
+    Log("[AddressSet] SizeOfImage = 0x%X\n", sizeOfImage);
 
-    if (text.find("mst_en") != std::string::npos)
-        return GameBuild::English;
+    const bool isEnglish = text.find("mst_en") != std::string::npos;
+    const bool isJapanese = text.find("mst_jp") != std::string::npos;
 
-    else if (text.find("mst_jp") != std::string::npos)
-        return GameBuild::Japanese;
-    else
-        return GameBuild::English;
+    if (!isEnglish && !isJapanese)
+    {
+        Log("[AddressSet] version_info.txt carries no mst_en / mst_jp marker.\n");
+        return GameBuild::Unknown;
+    }
 
-    return GameBuild::Unknown;
+    const bool tokenMatches = isEnglish
+        ? TextMatchesAnyToken(text, kVerifiedEnglishTokens)
+        : TextMatchesAnyToken(text, kVerifiedJapaneseTokens);
+
+    if (!tokenMatches)
+    {
+        const std::string expected = isEnglish
+            ? JoinTokens(kVerifiedEnglishTokens)
+            : JoinTokens(kVerifiedJapaneseTokens);
+
+        Log("[AddressSet] UNSUPPORTED game build: the %s address table was resolved for '%s' "
+            "and this executable is a different patch. Refusing to install any hooks, because "
+            "the stored addresses would point at unrelated code in this build.\n",
+            isEnglish ? "English" : "Japanese", expected.c_str());
+        return GameBuild::Unknown;
+    }
+
+    return isEnglish ? GameBuild::English : GameBuild::Japanese;
 }
 
 const char* GetGameBuildName(GameBuild build)

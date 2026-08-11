@@ -91,7 +91,25 @@ struct AddressSet
     uintptr_t SetEquipBackgroundTexture = 0;
     uintptr_t ModelNodeMesh_SetTextureName = 0;
     uintptr_t MbDvcSideOpsCallbackImpl_UpdateInformationTextBox = 0;
-}; 
+
+    uintptr_t ModelNodeText_ScrollDriver = 0;
+    uintptr_t ModelNodeText_GetDisplayWidth = 0;
+    uintptr_t SetAutoScrollTextForModelNodeText = 0;
+    uintptr_t SetTextForModelNodeTextUseAutoScroll = 0;
+    uintptr_t SettingTextUnitForScroll = 0;
+    uintptr_t SetTrack = 0;
+    uintptr_t CassetteListCtor = 0;
+    uintptr_t CassetteListDtor = 0;
+    uintptr_t MbDvcTapeListRecordText = 0;
+    uintptr_t MbDvcTrackListRecordText = 0;
+    uintptr_t CassetteUpdatePlayerPanel = 0;
+    uintptr_t MissionTaskRowUpdate = 0;
+    uintptr_t MissionTaskRowUpdate2 = 0;
+    uintptr_t UpdateIconInfo = 0;
+    uintptr_t TppUIInfoTypingText_UpdateText = 0;
+    uintptr_t EquipDetailsSetupDetails = 0;
+    uintptr_t GetUixUtilityToFeedQuarkEnvironment = 0;
+};
 
 extern GameBuild gGameBuild;
 extern AddressSet gAddr;

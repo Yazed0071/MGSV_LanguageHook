@@ -158,6 +158,9 @@
     <ClCompile Include="src\tpp\ui\hud\impl\TppUIInfoTypingTextImpl\TppUIInfoTypingTextImpl_SetTypingText.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\tpp\ui\hud\impl\TppUIInfoTypingTextImpl\TppUIInfoTypingText_UpdateTextRtl.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="src\tpp\ui\menu\impl\`anonymous_namespace%27\LoadoutPanelInfo\LoadoutPanelInfo_RefreshLoadoutText.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -198,6 +201,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\tpp\ui\menu\impl\MbDvcSideOpsCallbackImpl\MbDvcSideOpsCallbackImpl_UpdateInformationTextBox.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\tpp\ui\ModelNodeText\ArabicScrollReversal.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

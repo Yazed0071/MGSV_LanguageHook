@@ -7,9 +7,14 @@
 #include <cstring>
 
 static FILE* g_LogFile = nullptr;
+static ULONGLONG g_LastFlushTick = 0;
+static constexpr ULONGLONG kFlushIntervalMs = 250;
 
 void InitLog()
 {
+    if (g_LogFile)
+        return;
+
     #if _DEBUG
     AllocConsole();
     FILE* dummy;
@@ -17,6 +22,7 @@ void InitLog()
     freopen_s(&dummy, "CONOUT$", "w", stderr);
 
     SetConsoleTitleA("MGSV Arabic Hook Console");
+    #endif // _DEBUG
 
     char path[MAX_PATH];
     GetModuleFileNameA(nullptr, path, MAX_PATH);
@@ -26,39 +32,51 @@ void InitLog()
 
     fopen_s(&g_LogFile, path, "w");
     if (g_LogFile)
+    {
+        setvbuf(g_LogFile, nullptr, _IOFBF, 64 * 1024);
+        g_LastFlushTick = GetTickCount64();
         fprintf(g_LogFile, "[LOG] Log file created successfully.\n");
-    #endif // _DEBUG
-
+        fflush(g_LogFile);
+    }
 }
 
 void Log(const char* fmt, ...)
 {
+    #if _DEBUG
+    {
+        va_list argsConsole;
+        va_start(argsConsole, fmt);
+        vprintf(fmt, argsConsole);
+        va_end(argsConsole);
+    }
+    #endif // _DEBUG
+
+    if (!g_LogFile)
+        return;
+
     va_list args;
     va_start(args, fmt);
+    vfprintf(g_LogFile, fmt, args);
+    va_end(args);
 
-    vprintf(fmt, args);
-
-    if (g_LogFile)
+    const ULONGLONG now = GetTickCount64();
+    if (now - g_LastFlushTick >= kFlushIntervalMs)
     {
-        va_list args2;
-        va_start(args2, fmt);
-        vfprintf(g_LogFile, fmt, args2);
-        va_end(args2);
+        g_LastFlushTick = now;
         fflush(g_LogFile);
     }
-
-    va_end(args);
 }
 
 void CloseLog()
 {
-    #if _DEBUG
     if (g_LogFile)
     {
         fprintf(g_LogFile, "[LOG] Closing log.\n");
         fclose(g_LogFile);
         g_LogFile = nullptr;
     }
+
+    #if _DEBUG
     FreeConsole();
     #endif // _DEBUG
 }
