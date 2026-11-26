@@ -1,6 +1,7 @@
 #include "pch.h"
 #include <Windows.h>
 #include <atomic>
+#include <cerrno>
 #include <cmath>
 #include <cstdint>
 #include <cstdio>
@@ -311,43 +312,104 @@ namespace
     std::atomic<uint32_t> gSummaryEpoch{ 0 };
     std::atomic<ULONGLONG> gSummaryDue{ 0 };
 
-    std::wstring TablePath()
+    std::wstring DirectoryOf(HMODULE module)
     {
-        HMODULE self = nullptr;
-        if (!GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
-                                reinterpret_cast<LPCWSTR>(&TablePath), &self))
-            return {};
         wchar_t buffer[MAX_PATH] = {};
-        const DWORD length = GetModuleFileNameW(self, buffer, MAX_PATH);
+        const DWORD length = GetModuleFileNameW(module, buffer, MAX_PATH);
         if (length == 0 || length >= MAX_PATH)
             return {};
-        std::wstring path(buffer, length);
+        const std::wstring path(buffer, length);
         const size_t slash = path.find_last_of(L"\\/");
         if (slash == std::wstring::npos)
-            return TABLE_FILE;
-        return path.substr(0, slash + 1) + TABLE_FILE;
+            return {};
+        return path.substr(0, slash + 1);
     }
 
-    bool ReadWholeFile(const std::wstring& path, std::vector<uint8_t>& out)
+    // Looked in: the DLL's own folder, then the game folder's plugins\, then the game folder itself. Some plugin
+    // loaders run a copy of the DLL from somewhere else (under Proton, a hashed __plugin*.dll next to the exe), and
+    // the table must still be found where it was installed. When the DLL runs from the game folder itself, that
+    // folder is only tried last, so a leftover copy there never wins over the one installed in plugins\.
+    std::vector<std::wstring> TableCandidates()
     {
+        std::wstring selfDir;
+        HMODULE self = nullptr;
+        if (GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
+                               reinterpret_cast<LPCWSTR>(&TableCandidates), &self))
+            selfDir = DirectoryOf(self);
+        const std::wstring exeDir = DirectoryOf(nullptr);
+
+        std::vector<std::wstring> dirs;
+        if (!selfDir.empty() && (exeDir.empty() || _wcsicmp(selfDir.c_str(), exeDir.c_str()) != 0))
+            dirs.push_back(selfDir);
+        if (!exeDir.empty())
+        {
+            dirs.push_back(exeDir + L"plugins\\");
+            dirs.push_back(exeDir);
+        }
+        else if (!selfDir.empty())
+            dirs.push_back(selfDir);
+
+        std::vector<std::wstring> paths;
+        for (const std::wstring& dir : dirs)
+        {
+            if (dir.empty())
+                continue;
+            std::wstring path = dir + TABLE_FILE;
+            bool known = false;
+            for (const std::wstring& other : paths)
+                known = known || _wcsicmp(other.c_str(), path.c_str()) == 0;
+            if (!known)
+                paths.push_back(std::move(path));
+        }
+        return paths;
+    }
+
+    std::string Utf8(const std::wstring& text)
+    {
+        if (text.empty())
+            return {};
+        const int length = static_cast<int>(text.size());
+        const int size = WideCharToMultiByte(CP_UTF8, 0, text.c_str(), length, nullptr, 0, nullptr, nullptr);
+        if (size <= 0)
+            return {};
+        std::string out(static_cast<size_t>(size), '\0');
+        WideCharToMultiByte(CP_UTF8, 0, text.c_str(), length, &out[0], size, nullptr, nullptr);
+        return out;
+    }
+
+    enum class ReadResult
+    {
+        Ok,
+        Missing,
+        Unreadable,
+        BadSize,
+    };
+
+    ReadResult ReadWholeFile(const std::wstring& path, std::vector<uint8_t>& out, long long& size)
+    {
+        out.clear();
+        size = -1;
         FILE* file = nullptr;
-        if (path.empty() || _wfopen_s(&file, path.c_str(), L"rb") != 0 || !file)
-            return false;
-        bool ok = false;
+        const errno_t error = _wfopen_s(&file, path.c_str(), L"rb");
+        if (error != 0 || !file)
+            return error == ENOENT ? ReadResult::Missing : ReadResult::Unreadable;
+        ReadResult result = ReadResult::Unreadable;
         if (_fseeki64(file, 0, SEEK_END) == 0)
         {
-            const long long size = _ftelli64(file);
-            if (size >= static_cast<long long>(sizeof(TableHeader)) && size <= static_cast<long long>(MAX_TABLE_BYTES) &&
-                _fseeki64(file, 0, SEEK_SET) == 0)
+            size = _ftelli64(file);
+            if (size < static_cast<long long>(sizeof(TableHeader)) || size > static_cast<long long>(MAX_TABLE_BYTES))
+                result = ReadResult::BadSize;
+            else if (_fseeki64(file, 0, SEEK_SET) == 0)
             {
                 out.resize(static_cast<size_t>(size));
-                ok = std::fread(out.data(), 1, out.size(), file) == out.size();
+                if (std::fread(out.data(), 1, out.size(), file) == out.size())
+                    result = ReadResult::Ok;
             }
         }
         std::fclose(file);
-        if (!ok)
+        if (result != ReadResult::Ok)
             out.clear();
-        return ok;
+        return result;
     }
 
     bool InRange(uint32_t first, uint32_t count, uint32_t total)
@@ -1248,14 +1310,68 @@ bool InitLayoutDirectionRestore(HMODULE hGame)
 {
     if (gTable.load(std::memory_order_acquire))
         return true;
-    auto table = std::make_unique<Table>();
-    if (!ReadWholeFile(TablePath(), table->blob) || !BuildTable(*table))
+    std::unique_ptr<Table> table;
+    std::wstring loadedFrom;
+    std::string skipped;
+    for (const std::wstring& path : TableCandidates())
     {
-        Log("[LayoutDirection] %ls not found or not this version - layouts follow a language switch only when their "
-            "pack reloads.\n",
-            TABLE_FILE);
+        auto attempt = std::make_unique<Table>();
+        long long size = -1;
+        char detail[96] = {};
+        const char* reason = nullptr;
+        switch (ReadWholeFile(path, attempt->blob, size))
+        {
+        case ReadResult::Missing:
+            reason = "missing";
+            break;
+        case ReadResult::Unreadable:
+            reason = "could not be opened or read";
+            break;
+        case ReadResult::BadSize:
+            sprintf_s(detail, "%lld bytes, not a layout table size", size);
+            reason = detail;
+            break;
+        case ReadResult::Ok:
+        {
+            TableHeader header{};
+            std::memcpy(&header, attempt->blob.data(), sizeof(header));
+            if (header.magic != TABLE_MAGIC)
+                reason = "not a layout table";
+            else if (header.version != TABLE_VERSION)
+            {
+                sprintf_s(detail, "format version %u, this DLL reads version %u", header.version, TABLE_VERSION);
+                reason = detail;
+            }
+            else if (!BuildTable(*attempt))
+            {
+                sprintf_s(detail, "%lld bytes, contents do not match its header", size);
+                reason = detail;
+            }
+            break;
+        }
+        }
+        if (!reason)
+        {
+            table = std::move(attempt);
+            loadedFrom = path;
+            break;
+        }
+        skipped += "  ";
+        skipped += Utf8(path);
+        skipped += " - ";
+        skipped += reason;
+        skipped += "\n";
+    }
+    if (!table)
+    {
+        Log("[LayoutDirection] %ls could not be used - layouts follow a language switch only when their pack "
+            "reloads. Looked in:\n%s",
+            TABLE_FILE, skipped.empty() ? "  (no folder could be worked out)\n" : skipped.c_str());
         return false;
     }
+    if (!skipped.empty())
+        Log("[LayoutDirection] passed over before the table was found:\n%s", skipped.c_str());
+    Log("[LayoutDirection] table read from %s\n", Utf8(loadedFrom).c_str());
     const size_t files = table->fileCount;
     const size_t packs = table->packCount;
     gTable.store(table.release(), std::memory_order_release);

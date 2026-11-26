@@ -753,6 +753,20 @@ static DWORD WINAPI InitThread(LPVOID)
 
     Log("[DLL] InitThread started.\n");
 
+    {
+        // Which file is running: a loader that copies or renames the DLL shows up here at once.
+        HMODULE self = nullptr;
+        wchar_t selfPath[MAX_PATH] = {};
+        if (GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
+                               reinterpret_cast<LPCWSTR>(&InitThread), &self) &&
+            GetModuleFileNameW(self, selfPath, MAX_PATH))
+        {
+            char selfUtf8[MAX_PATH * 3] = {};
+            WideCharToMultiByte(CP_UTF8, 0, selfPath, -1, selfUtf8, sizeof(selfUtf8), nullptr, nullptr);
+            Log("[DLL] running from %s\n", selfUtf8);
+        }
+    }
+
     HMODULE hGame = GetModuleHandleW(nullptr);
     if (!hGame)
     {
