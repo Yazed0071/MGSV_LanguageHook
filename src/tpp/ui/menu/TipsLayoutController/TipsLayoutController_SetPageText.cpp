@@ -1,5 +1,6 @@
 #include "pch.h"
 #include <Windows.h>
+#include <cstdarg>
 #include <cstdint>
 #include <cstring>
 #include <string>
@@ -7,6 +8,7 @@
 #include "MinHook.h"
 #include "log.h"
 #include "AddressSet.h"
+#include "LanguageProfile.h"
 
 namespace
 {
@@ -29,6 +31,95 @@ namespace
     static constexpr ptrdiff_t kAlignOffset = 0xD8;
     static constexpr ptrdiff_t kTitleBufOffset = 0x6A;
     static constexpr size_t    kTitleBufSize = 100;
+    static constexpr size_t    kFullTitleSize = 1024;
+    static constexpr uintptr_t kImageBase = 0x140000000ull;
+
+    using FoxVsnprintf_t = int(__cdecl*)(char* buf, size_t size, const char* fmt, va_list args);
+
+    static const uint8_t kFoxSnprintfPrologue[] = {
+        0x4C, 0x89, 0x44, 0x24, 0x18, 0x4C, 0x89, 0x4C, 0x24, 0x20, 0x53, 0x57, 0x48, 0x83, 0xEC, 0x28,
+    };
+
+    static FoxVsnprintf_t gFoxVsnprintf = nullptr;
+    static void* gFoxSnprintfTarget = nullptr;
+    static void* gFoxSnprintfOriginal = nullptr;
+    static thread_local char* tTitleBuf = nullptr;
+    static thread_local std::string tFullTitle;
+    static std::string gShownTitle;
+}
+
+static bool IsArabicSafe();
+bool FormatArabicTimeLargestUnitFirst(char* buf, size_t size, const char* fmt, va_list args, int& written);
+
+static bool IsPlayTimeFormat(const char* fmt)
+{
+    static const char* const kPlayTimeFormats[] = {
+        "%02u:%02u/%02u:%02u",
+        "%02u:%02u/--:--",
+        "%02u:%02u:%02u/%02u:%02u:%02u",
+        "%02u:%02u:%02u/--:--:--",
+    };
+    if (fmt[0] != '%' || fmt[1] != '0' || fmt[2] != '2' || fmt[3] != 'u')
+        return false;
+    for (const char* known : kPlayTimeFormats)
+    {
+        if (std::strcmp(fmt, known) == 0)
+            return true;
+    }
+    return false;
+}
+
+static void PutTotalTimeFirst(char* buf, size_t size)
+{
+    const size_t length = strnlen(buf, size);
+    const char* slash = static_cast<const char*>(std::memchr(buf, '/', length));
+    if (!slash || length >= 64)
+        return;
+    const size_t left = static_cast<size_t>(slash - buf);
+    char swapped[64];
+    std::memcpy(swapped, slash + 1, length - left - 1);
+    swapped[length - left - 1] = '/';
+    std::memcpy(swapped + length - left, buf, left);
+    std::memcpy(buf, swapped, length);
+}
+
+static int __cdecl hkFoxSnprintf(char* buf, size_t size, const char* fmt, ...)
+{
+    va_list args;
+    va_start(args, fmt);
+    int timeWritten = 0;
+    if (FormatArabicTimeLargestUnitFirst(buf, size, fmt, args, timeWritten))
+    {
+        va_end(args);
+        return timeWritten;
+    }
+    va_list again;
+    va_copy(again, args);
+    const int written = gFoxVsnprintf(buf, size, fmt, args);
+    va_end(args);
+    if (tTitleBuf && buf == tTitleBuf && fmt && (written < 0 || static_cast<size_t>(written) >= size))
+    {
+        static thread_local char full[kFullTitleSize];
+        const int needed = gFoxVsnprintf(full, sizeof(full), fmt, again);
+        if (needed > 0 && static_cast<size_t>(needed) < sizeof(full))
+            tFullTitle.assign(full, static_cast<size_t>(needed));
+    }
+    va_end(again);
+    if (written > 0 && static_cast<size_t>(written) < size && buf && fmt && IsPlayTimeFormat(fmt) && IsArabicSafe())
+        PutTotalTimeFirst(buf, size);
+    return written;
+}
+
+static bool CodeMatches(const void* target, const uint8_t* expected, size_t size)
+{
+    __try
+    {
+        return std::memcmp(target, expected, size) == 0;
+    }
+    __except (EXCEPTION_EXECUTE_HANDLER)
+    {
+        return false;
+    }
 }
 
 /* Checks Arabic state safely. */
@@ -138,6 +229,8 @@ static void* GetNodePtr(void* thisPtr, ptrdiff_t offset)
     return node;
 }
 
+void KeepArabicLinesRightAligned(void* node);
+
 /* Forces one ModelNodeText to right alignment. */
 static void ForceRightAlignNode(void* node)
 {
@@ -145,6 +238,7 @@ static void ForceRightAlignNode(void* node)
         return;
 
     SafeWriteU8(reinterpret_cast<uint8_t*>(node) + kAlignOffset, TEXT_ALIGN_RIGHT);
+    KeepArabicLinesRightAligned(node);
 }
 
 /* Trims one trailing space before "(x/y)". */
@@ -178,7 +272,7 @@ static std::string RewriteTipsPageTitleArabic(const std::string& src)
     if (title.empty())
         return src;
 
-    char rebuilt[kTitleBufSize] = {};
+    char rebuilt[kFullTitleSize] = {};
     _snprintf_s(
         rebuilt,
         sizeof(rebuilt),
@@ -192,7 +286,7 @@ static std::string RewriteTipsPageTitleArabic(const std::string& src)
 }
 
 /* Rewrites the title buffer and refreshes the title node. */
-static void RefreshArabicTitle(void* thisPtr, void* titleTextUnit)
+static void RefreshArabicTitle(void* thisPtr, void* titleTextUnit, const std::string& fullTitle)
 {
     if (!thisPtr || !gSetTextForModelNodeText)
         return;
@@ -200,27 +294,31 @@ static void RefreshArabicTitle(void* thisPtr, void* titleTextUnit)
     auto* base = reinterpret_cast<uint8_t*>(thisPtr);
     char* titleBuf = reinterpret_cast<char*>(base + kTitleBufOffset);
 
-    std::string before;
-    if (!SafeReadCString(titleBuf, kTitleBufSize, before))
+    std::string before = fullTitle;
+    if (before.empty() && !SafeReadCString(titleBuf, kTitleBufSize, before))
         return;
 
     const std::string after = RewriteTipsPageTitleArabic(before);
-    if (after.empty() || after == before)
+    if (after.empty() || (after == before && fullTitle.empty()))
         return;
 
-    if (!SafeWriteCString(titleBuf, kTitleBufSize, after.c_str()))
+    if (after.size() < kTitleBufSize && !SafeWriteCString(titleBuf, kTitleBufSize, after.c_str()))
         return;
 
     void* titleNode = GetNodePtr(thisPtr, kTitleNodeOffset);
     if (!titleNode)
         return;
 
+    gShownTitle = after;
     ForceRightAlignNode(titleNode);
-    gSetTextForModelNodeText(titleNode, titleTextUnit, titleBuf, 1);
+    gSetTextForModelNodeText(titleNode, titleTextUnit, gShownTitle.c_str(), 1);
     ForceRightAlignNode(titleNode);
+    if (!fullTitle.empty())
+        Log("[TipsLayoutController::SetPageText] title did not fit the game's %zu-byte buffer - shown in full (%zu bytes)\n",
+            kTitleBufSize, fullTitle.size());
 
-    Log("[TipsLayoutController::SetPageText] before: %s\n", before.c_str());
-    Log("[TipsLayoutController::SetPageText] after : %s\n", after.c_str());
+    LogDetail("[TipsLayoutController::SetPageText] before: %s\n", before.c_str());
+    LogDetail("[TipsLayoutController::SetPageText] after : %s\n", after.c_str());
 }
 
 /* Hook for TipsLayoutController::SetPageText(this, titleTextUnit, bodyTextUnit, bodyParam). */
@@ -233,8 +331,13 @@ static uint64_t __fastcall hkTipsLayoutController_SetPageText(
     if (!gOrigSetPageText)
         return 0;
 
+    tFullTitle.clear();
+    tTitleBuf = thisPtr ? reinterpret_cast<char*>(thisPtr) + kTitleBufOffset : nullptr;
     const uint64_t result =
         gOrigSetPageText(thisPtr, titleTextUnit, bodyTextUnit, bodyParam);
+    tTitleBuf = nullptr;
+    const std::string fullTitle = std::move(tFullTitle);
+    tFullTitle.clear();
 
     if (!IsArabicSafe() || !thisPtr)
         return result;
@@ -248,7 +351,7 @@ static uint64_t __fastcall hkTipsLayoutController_SetPageText(
     ForceRightAlignNode(titleNode);
     ForceRightAlignNode(bodyNode);
 
-    RefreshArabicTitle(thisPtr, titleTextUnit);
+    RefreshArabicTitle(thisPtr, titleTextUnit, fullTitle);
 
     return result;
 }
@@ -256,15 +359,13 @@ static uint64_t __fastcall hkTipsLayoutController_SetPageText(
 /* Installs the TipsLayoutController::SetPageText Arabic hook. */
 bool InstallTipsLayoutControllerSetPageTextHook(HMODULE hGame)
 {
-    UNREFERENCED_PARAMETER(hGame);
-
     if (!gAddr.IsArabLanguage || !gAddr.SetPageText || !gAddr.SetTextForModelNodeText)
     {
         Log("[TipsLayoutController::SetPageText] Missing address.\n");
         return false;
     }
 
-    gIsArabLanguage = reinterpret_cast<IsArabLanguage_t>(gAddr.IsArabLanguage);
+    gIsArabLanguage = &RL_IsRightToLeft;
     gSetTextForModelNodeText = reinterpret_cast<SetTextForModelNodeText_t>(gAddr.SetTextForModelNodeText);
     gTarget = reinterpret_cast<void*>(gAddr.SetPageText);
 
@@ -291,6 +392,31 @@ bool InstallTipsLayoutControllerSetPageTextHook(HMODULE hGame)
     }
 
     Log("[TipsLayoutController::SetPageText] Arabic hook enabled.\n");
+
+    if (!hGame || !gAddr.FoxSnprintf || !gAddr.FoxVsnprintf)
+    {
+        Log("[fox::snprintf] address missing - long Arabic tip titles stay cut at %zu bytes.\n", kTitleBufSize);
+        return true;
+    }
+    void* snprintfTarget =
+        reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(hGame) + (gAddr.FoxSnprintf - kImageBase));
+    if (!CodeMatches(snprintfTarget, kFoxSnprintfPrologue, sizeof(kFoxSnprintfPrologue)))
+    {
+        Log("[fox::snprintf] code is not what this build should have - long Arabic tip titles stay cut.\n");
+        return true;
+    }
+    gFoxVsnprintf = reinterpret_cast<FoxVsnprintf_t>(
+        reinterpret_cast<uintptr_t>(hGame) + (gAddr.FoxVsnprintf - kImageBase));
+    if (MH_CreateHook(snprintfTarget, reinterpret_cast<void*>(&hkFoxSnprintf), &gFoxSnprintfOriginal) != MH_OK ||
+        MH_EnableHook(snprintfTarget) != MH_OK)
+    {
+        MH_RemoveHook(snprintfTarget);
+        gFoxVsnprintf = nullptr;
+        Log("[fox::snprintf] hook failed - long Arabic tip titles stay cut.\n");
+        return true;
+    }
+    gFoxSnprintfTarget = snprintfTarget;
+    Log("[fox::snprintf] watched while TIPS titles are formatted - long Arabic titles are shown in full.\n");
     return true;
 }
 
@@ -303,6 +429,15 @@ void RemoveTipsLayoutControllerSetPageTextHook()
         MH_RemoveHook(gTarget);
         gTarget = nullptr;
     }
+
+    if (gFoxSnprintfTarget)
+    {
+        MH_DisableHook(gFoxSnprintfTarget);
+        MH_RemoveHook(gFoxSnprintfTarget);
+        gFoxSnprintfTarget = nullptr;
+    }
+    gFoxSnprintfOriginal = nullptr;
+    gFoxVsnprintf = nullptr;
 
     gOrigSetPageText = nullptr;
     gSetTextForModelNodeText = nullptr;

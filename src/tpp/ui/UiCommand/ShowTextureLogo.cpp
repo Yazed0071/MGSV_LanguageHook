@@ -17,6 +17,8 @@
 #include "log.h"
 #include "AddressSet.h"
 
+bool FoxAssetExists(uint64_t code);
+
 // ------------------------------------------------------------
 // Minimal Lua forward declarations
 // ------------------------------------------------------------
@@ -357,6 +359,12 @@ static int hkShowTextureLogo(lua_State* L)
 
     if (!CanHandleArabicSpecialCase(L, rawLogoStrPtr, timeSeconds))
         return oShowTextureLogo(L);
+
+    if (!FoxAssetExists(ARABIC_LOGO_TEXTURE_ID))
+    {
+        Log("[ShowTextureLogo] Arabic logo texture not found - vanilla logo shown.\n");
+        return oShowTextureLogo(L);
+    }
 
     if (!gCommonDataManagerGetInstance || !gSetDispTextureLogo)
         return oShowTextureLogo(L);

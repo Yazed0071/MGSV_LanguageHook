@@ -9,12 +9,13 @@
 #include "MinHook.h"
 #include "log.h"
 #include "AddressSet.h"
+#include "LanguageProfile.h"
 
 namespace
 {
     using IsArabLanguage_t = bool(__cdecl*)();
     using tpp_ui_hud_AnnounceLogViewer_CallLogView_t =
-        void(__fastcall*)(void* thisPtr, char* text, char param3, uint8_t slot, char param5);
+        bool(__fastcall*)(void* thisPtr, char* text, char param3, uint8_t slot, char param5);
 
     using GetUix_t = void*(__cdecl*)();
     using UixSetNodeFloat_t = void(__fastcall*)(void* self, void* node, float value);
@@ -190,6 +191,33 @@ static void RestoreOriginalAlign(void* node)
         Log("[tpp::ui::hud::AnnounceLogViewer::CallLogView] Failed to restore alignment.\n");
 }
 
+static void ReadNodeFirstText(void* node, char* dst, size_t dstSize)
+{
+    if (!dst || dstSize == 0)
+        return;
+    dst[0] = '\0';
+    if (!node)
+        return;
+
+    void* unitArray = nullptr;
+    if (!SafeReadPtr(reinterpret_cast<uint8_t*>(node) + 0x138, unitArray) || !unitArray)
+        return;
+
+    void* text = nullptr;
+    if (!SafeReadPtr(unitArray, text) || !text)
+        return;
+
+    __try
+    {
+        const char* s = reinterpret_cast<const char*>(text);
+        size_t i = 0;
+        for (; i + 1 < dstSize && s[i]; ++i)
+            dst[i] = s[i];
+        dst[i] = '\0';
+    }
+    __except (EXCEPTION_EXECUTE_HANDLER) { dst[0] = '\0'; }
+}
+
 static void ApplyArabicAlignmentToSlot(void* thisPtr, uint8_t slot)
 {
     if (!thisPtr)
@@ -206,6 +234,24 @@ static void ApplyArabicAlignmentToSlot(void* thisPtr, uint8_t slot)
 
     if (SafeReadPtr(base + slotOff + 0x20, nodeB) && nodeB)
         ApplyArabicLeftToRightRule(nodeB);
+
+    static int slotDiagBudget = 40;
+    if (slotDiagBudget > 0 && RL_DiagnosticsEnabled())
+    {
+        --slotDiagBudget;
+
+        char ta[80] = {}, tb[80] = {};
+        ReadNodeFirstText(nodeA, ta, sizeof(ta));
+        ReadNodeFirstText(nodeB, tb, sizeof(tb));
+
+        uint8_t da = 0xFF, db = 0xFF;
+        if (nodeA) SafeReadU8(reinterpret_cast<uint8_t*>(nodeA) + kModelNodeTextAlignOffset, da);
+        if (nodeB) SafeReadU8(reinterpret_cast<uint8_t*>(nodeB) + kModelNodeTextAlignOffset, db);
+
+        LogDetail("[SlotDiag] slot=%u A=%p d8=%u textA=[%s]  B=%p d8=%u textB=[%s]\n",
+            static_cast<unsigned>(slot), nodeA, static_cast<unsigned>(da), ta,
+            nodeB, static_cast<unsigned>(db), tb);
+    }
 }
 
 static void RestoreAlignmentForSlot(void* thisPtr, uint8_t slot)
@@ -334,7 +380,7 @@ static void ApplyArabicBarRightAnchor(void* thisPtr, uint8_t slot)
 
     SetBarPosX(uix, barNode, setPosX);
 
-    if (gBarDiagBudget > 0)
+    if (gBarDiagBudget > 0 && RL_DiagnosticsEnabled())
     {
         gBarDiagBudget--;
         const float ws = revealMetric * kRevealScale + kRevealBias;
@@ -370,15 +416,40 @@ static void RestoreBarForSlot(void* thisPtr, uint8_t slot)
 }
 
 /* tpp::ui::hud::AnnounceLogViewer::CallLogView(thisPtr, text, param3, slot, param5). */
-static void __fastcall hk_tpp_ui_hud_AnnounceLogViewer_CallLogView(
+static bool __fastcall hk_tpp_ui_hud_AnnounceLogViewer_CallLogView(
     void* thisPtr,
     char* text,
     char param3,
     uint8_t slot,
     char param5)
 {
-    if (gOrig_tpp_ui_hud_AnnounceLogViewer_CallLogView)
-        gOrig_tpp_ui_hud_AnnounceLogViewer_CallLogView(thisPtr, text, param3, slot, param5);
+    {
+        static int callDiagBudget = 60;
+        if (callDiagBudget > 0 && RL_DiagnosticsEnabled())
+        {
+            --callDiagBudget;
+            char t[120] = {};
+            __try
+            {
+                if (text)
+                {
+                    size_t i = 0;
+                    for (; i + 1 < sizeof(t) && text[i]; ++i)
+                        t[i] = text[i];
+                    t[i] = '\0';
+                }
+            }
+            __except (EXCEPTION_EXECUTE_HANDLER) { t[0] = '\0'; }
+
+            LogDetail("[CallLogView] slot=%u p3=%d p5=%d text=[%s]\n",
+                static_cast<unsigned>(slot), static_cast<int>(param3),
+                static_cast<int>(param5), t);
+        }
+    }
+
+    const bool result = gOrig_tpp_ui_hud_AnnounceLogViewer_CallLogView
+        ? gOrig_tpp_ui_hud_AnnounceLogViewer_CallLogView(thisPtr, text, param3, slot, param5)
+        : false;
 
     if (IsArabicSafe())
     {
@@ -390,6 +461,8 @@ static void __fastcall hk_tpp_ui_hud_AnnounceLogViewer_CallLogView(
         RestoreAlignmentForSlot(thisPtr, slot);
         RestoreBarForSlot(thisPtr, slot);
     }
+
+    return result;
 }
 
 /* CallLogView Arabic left->right alignment hook. hGame kept for project consistency. */
@@ -404,7 +477,7 @@ bool InstallAnnounceLogViewerCallLogViewArabicLeftToRightAlignHook(HMODULE hGame
         return false;
     }
 
-    gIsArabLanguage = reinterpret_cast<IsArabLanguage_t>(gAddr.IsArabLanguage);
+    gIsArabLanguage = &RL_IsRightToLeft;
     gTarget = reinterpret_cast<void*>(gAddr.CallLogView);
     gGetUix = reinterpret_cast<GetUix_t>(gAddr.GetUixUtilityToFeedQuarkEnvironment);
 

@@ -110,11 +110,13 @@
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;MSGVHOOK_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <AdditionalIncludeDirectories>$(SolutionDir);$(SolutionDir)include;$(SolutionDir)src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <ForcedIncludeFiles>MinHookBatch.h;%(ForcedIncludeFiles)</ForcedIncludeFiles>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -130,11 +132,13 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;MSGVHOOK_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <AdditionalIncludeDirectories>$(SolutionDir);$(SolutionDir)include;$(SolutionDir)src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <ForcedIncludeFiles>MinHookBatch.h;%(ForcedIncludeFiles)</ForcedIncludeFiles>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -156,6 +160,8 @@
     <ClInclude Include="include\luaconf.h" />
     <ClInclude Include="include\lualib.h" />
     <ClInclude Include="include\MinHook.h" />
+    <ClInclude Include="include\MinHookBatch.h" />
+    <ClInclude Include="include\LanguageProfile.h" />
     <ClInclude Include="pch.h" />
   </ItemGroup>
   <ItemGroup>
@@ -170,9 +176,49 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="src\fox\ui\TextAnalysis\CreateTextUnits.cpp" />
+    <ClCompile Include="src\tpp\ui\utility\GetUTF8TextFromBack.cpp" />
+    <ClCompile Include="src\fox\gr\dg\ArabicGlyphRendering.cpp" />
+    <ClCompile Include="src\fox\ui\ModelNodeText\StoreTextData.cpp" />
+    <ClCompile Include="src\tpp\ui\impl\EpilogueController\EpilogueController_SetupAsset.cpp" />
+    <ClCompile Include="src\tpp\ui\hud\impl\RadioButtonGuideImpl\RadioButtonGuideImpl_ArabicMirror.cpp" />
+    <ClCompile Include="src\tpp\ui\hud\impl\TppUIMusicTelopImpl\TppUIMusicTelopImpl_ArabicRightAlign.cpp" />
+    <ClCompile Include="src\tpp\ui\menu\MbTitleEv\MbTitleEv_Update.cpp" />
+    <ClCompile Include="src\tpp\ui\menu\MbCommonPopupAct\MbCommonPopupAct_Update.cpp" />
+    <ClCompile Include="src\tpp\ui\hud\impl\TppUIResultImpl\TppUIResultImpl_UpdateMissionRadioCommand.cpp" />
+    <ClCompile Include="src\tpp\ui\menu\impl\MenuTitleCallbackImpl\MenuTitleCallbackImpl_ArabicBreadcrumb.cpp" />
+    <ClCompile Include="src\tpp\ui\menu\mbm\impl\DataBaseCallbackImpl\DataBaseCallbackImpl_ArabicInfoText.cpp" />
+    <ClCompile Include="src\fox\ui\uix\UixUtility_ArabicRecordRows.cpp" />
+    <ClCompile Include="src\tpp\ui\menu\mbm\impl\CombatDeployCallbackImpl\CombatDeployCallbackImpl_RefreshMissionTextBox.cpp" />
+    <ClCompile Include="src\tpp\ui\hud\WorldMarkerEvCall\WorldMarkerLayout_LengthText.cpp" />
+    <ClCompile Include="src\tpp\ui\hud\impl\ActiveSonarImpl\ActiveSonarImpl_UpdateDistanceText.cpp" />
+    <ClCompile Include="src\crt\msvcr110_strncpy_s.cpp" />
+    <ClCompile Include="src\tpp\ui\menu\impl\MbDvcMissionListCallbackImpl\MbDvcMissionListCallbackImpl_ShowSkillView.cpp" />
+    <ClCompile Include="src\tpp\ui\menu\impl\MbDvcPauseHelpCallbackImpl\MbDvcPauseHelpCallbackImpl_SetupTutorialPopup.cpp" />
+    <ClCompile Include="src\tpp\ui\menu\impl\MbDvcPauseHelpCallbackImpl\MbDvcPauseHelpCallbackImpl_RefreshHelpPage.cpp" />
+    <ClCompile Include="src\tpp\ui\menu\impl\MbDvcPauseHelpCallbackImpl\MbDvcPauseHelpCallbackImpl_RefreshHeaderText.cpp" />
+    <ClCompile Include="src\tpp\ui\utility\UiUtilityImpl_SetPadButtonPrompt.cpp" />
+    <ClCompile Include="src\tpp\ui\utility\GradeMarkRtl.cpp" />
+    <ClCompile Include="src\fox\impl\StringSystemImpl\StringSystemImpl_snprintf.cpp" />
+    <ClCompile Include="src\fox\ui\Model\Model_DrawInspector.cpp" />
+    <ClCompile Include="src\fox\ui\Model\Model_LayoutMirror.cpp" />
+    <ClCompile Include="src\fox\ui\Model\Model_LayoutDirection.cpp" />
+    <ClCompile Include="src\tpp\gm\player\SpecialEventAction_AvatarEditCamera.cpp" />
+    <ClCompile Include="src\Diagnostics.cpp" />
+    <ClCompile Include="src\UnsupportedBuildNotice.cpp" />
+    <ClCompile Include="src\UnsupportedBuildText.cpp" />
+    <ClCompile Include="src\fox\ui\ActSetText\ActSetText_Update.cpp" />
+    <ClCompile Include="src\fox\ui\ModelNodeText\ModelNodeText_Draw.cpp" />
+    <ClCompile Include="src\fox\ui\ModelNodeText\ModelNodeText_ArabicAudit.cpp" />
+    <ClCompile Include="src\tpp\mbm\impl\StaffControllerImpl\StaffControllerImpl_GetStaffFullName.cpp" />
+    <ClCompile Include="src\tpp\net\ServerLanguageFallback.cpp" />
+    <ClCompile Include="src\tpp\ui\menu\MbDvcCassetteTape\MbDvcCassetteTape_SwapSeekButtons.cpp" />
+    <ClCompile Include="src\tpp\ui\menu\MbDvcMap\MbDvcMap_MirrorMaskOffset.cpp" />    <ClCompile Include="src\tpp\ui\menu\mbm\impl\SecurityDetailRecord\SecurityDetailRecord_MirrorValueX.cpp" />
+    <ClCompile Include="src\MinHookBatch.cpp" />
+    <ClCompile Include="src\LanguageProfile.cpp" />
     <ClCompile Include="src\tpp\ui\equip\equip_SetEquipBackgroundTexture.cpp" />
     <ClCompile Include="src\tpp\ui\hud\AnnounceLogViewer\AnnounceLogViewer_CallLogView.cpp" />
     <ClCompile Include="src\tpp\ui\hud\ChapterTelopInfo\GetFtexPathId.cpp" />
+    <ClCompile Include="src\tpp\ui\hud\BinoMic\BinoMic_MirrorGauge.cpp" />
     <ClCompile Include="src\tpp\ui\hud\DisplayTimerEvCall\SetDisplayText.cpp" />
     <ClCompile Include="src\tpp\ui\hud\EquipCrossEvCall\EquipCrossEvCall_SetCircleCursorFromSrickDir.cpp" />
     <ClCompile Include="src\tpp\ui\hud\HeadMarkMarkerEvCall\HeadMarkMarkerEvCall_SetMarkerText.cpp" />
@@ -197,6 +243,8 @@
     <ClCompile Include="src\tpp\ui\menu\impl\MbDvcSideOpsCallbackImpl\MbDvcSideOpsCallbackImpl_UpdateInformationTextBox.cpp" />
     <ClCompile Include="src\tpp\ui\menu\impl\MbDvcSideOpsRecordCallFunc\MbDvcSideOpsRecordCallFunc_ViewRecord.cpp" />
     <ClCompile Include="src\tpp\ui\menu\impl\MenuSystemImpl\GetTipsLangBlockPath.cpp" />
+    <ClCompile Include="src\fox\gk\subtitles\SubtitlesBinaryCollector_StreamLineLimit.cpp" />
+    <ClCompile Include="src\fox\gk\subtitles\SubtitlesBlockControllerDataBody_KeepAreaSubtitles.cpp" />
     <ClCompile Include="SetLuaFunctions.cpp" />
     <ClCompile Include="src\tpp\ui\menu\impl\MissionPreparationCallbackImpl\MissionPreparationCallbackImpl_SetupMissionName.cpp" />
     <ClCompile Include="src\tpp\ui\menu\impl\MotherBaseDevicePauseHelpTableImpl\GetPauseHelpLangBlockPath.cpp" />
@@ -214,6 +262,10 @@
     <ClCompile Include="src\tpp\ui\menu\TitleLayoutController.cpp" />
     <ClCompile Include="src\tpp\ui\UiCommand\ShowChapterTelop.cpp" />
     <ClCompile Include="src\tpp\ui\UiCommand\ShowTextureLogo.cpp" />
+    <ClCompile Include="src\fox\fs\FileLocationManager\FileLocationManager_LocatePath.cpp" />
+    <ClCompile Include="src\fox\Block\Block_Load.cpp" />
+    <ClCompile Include="src\fox\Lua\LuaCrashReport.cpp" />
+    <ClCompile Include="src\tpp\ui\menu\impl\MbDvcResourceRecord\MbDvcResourceRecord_LayoutAmountColumn.cpp" />    <ClCompile Include="src\fox\ui\Font\Font_CreateText.cpp" />
     <ClCompile Include="src\tpp\ui\lang\UnkLoadUIDefaultDataFunc.cpp" />
     <ClCompile Include="src\tpp\ui\ModelNodeText\ArabicScrollReversal.cpp" />
   </ItemGroup>

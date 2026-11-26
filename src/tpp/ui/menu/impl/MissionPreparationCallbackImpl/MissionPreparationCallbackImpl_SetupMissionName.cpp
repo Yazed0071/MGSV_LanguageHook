@@ -7,6 +7,7 @@
 #include "MinHook.h"
 #include "log.h"
 #include "AddressSet.h"
+#include "LanguageProfile.h"
 
 namespace
 {
@@ -177,7 +178,11 @@ static std::string SwapNumericDashFormat(const std::string& src)
     const std::string left = TrimAscii(src.substr(0, sep));
     const std::string right = TrimAscii(src.substr(sep + 3));
 
-    if (!IsAsciiDigitsOnly(left) || right.empty())
+    if (right.empty())
+        return src;
+    if (left.empty())
+        return right + " -" + std::string(sep + 1, ' ');
+    if (!IsAsciiDigitsOnly(left))
         return src;
 
     return right + " - " + left;
@@ -305,6 +310,12 @@ static void ApplyArabicMissionPreparationNameFix(void* thisPtr)
     if (!SafeReadCString(mainBuf, 0xFF, before))
         return;
 
+    if (!ForceMainMissionLineAlignment(thisPtr, kForcedMainAlign))
+        Log("[MissionPreparationCallbackImpl::SetupMissionName] ForceMainMissionLineAlignment failed.\n");
+
+    if (!ForceSubMissionLineAlignment(thisPtr, kForcedSubAlign))
+        Log("[MissionPreparationCallbackImpl::SetupMissionName] ForceSubMissionLineAlignment failed.\n");
+
     const std::string after = SwapNumericDashFormat(before);
     if (after != before)
     {
@@ -313,18 +324,12 @@ static void ApplyArabicMissionPreparationNameFix(void* thisPtr)
             if (!ReapplyMainMissionLine(thisPtr))
                 Log("[MissionPreparationCallbackImpl::SetupMissionName] ReapplyMainMissionLine failed.\n");
             else
-                Log("[MissionPreparationCallbackImpl::SetupMissionName] before: %s | after: %s\n", before.c_str(), after.c_str());
+                LogDetail("[MissionPreparationCallbackImpl::SetupMissionName] before: %s | after: %s\n", before.c_str(), after.c_str());
         }
     }
 
     if (!ReapplySubMissionLine(thisPtr))
         Log("[MissionPreparationCallbackImpl::SetupMissionName] ReapplySubMissionLine failed.\n");
-
-    if (!ForceMainMissionLineAlignment(thisPtr, kForcedMainAlign))
-        Log("[MissionPreparationCallbackImpl::SetupMissionName] ForceMainMissionLineAlignment failed.\n");
-
-    if (!ForceSubMissionLineAlignment(thisPtr, kForcedSubAlign))
-        Log("[MissionPreparationCallbackImpl::SetupMissionName] ForceSubMissionLineAlignment failed.\n");
 }
 
 /* Hook for MissionPreparationCallbackImpl::SetupMissionName(this). */
@@ -350,7 +355,7 @@ bool InstallMissionPreparationCallbackImplSetupMissionNameArabicHook(HMODULE hGa
         return false;
     }
 
-    gIsArabLanguage = reinterpret_cast<IsArabLanguage_t>(gAddr.IsArabLanguage);
+    gIsArabLanguage = &RL_IsRightToLeft;
     gTarget = reinterpret_cast<void*>(gAddr.MissionPreparationCallbackImpl_SetupMissionName);
     if (!gTarget)
         return false;

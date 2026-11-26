@@ -9,6 +9,7 @@
 #include "MinHook.h"
 #include "log.h"
 #include "AddressSet.h"
+#include "LanguageProfile.h"
 
 namespace
 {
@@ -212,13 +213,56 @@ static std::string SwapNumericDashFormat(const std::string& src)
     const std::string left = TrimAscii(src.substr(0, sep));
     const std::string right = TrimAscii(src.substr(sep + 3));
 
-    if (!IsAsciiDigitsOnly(left) || right.empty())
+    if (right.empty())
+        return src;
+    if (left.empty())
+        return right + " -" + std::string(sep + 1, ' ');
+    if (!IsAsciiDigitsOnly(left))
         return src;
 
     return right + " - " + left;
 }
 
 /* "2 / 5" -> "5 / 2" */
+static bool HasArabicBytes(const std::string& s)
+{
+    for (size_t i = 0; i < s.size(); ++i)
+    {
+        const uint8_t c = static_cast<uint8_t>(s[i]);
+        if (c >= 0xD8 && c <= 0xDB)
+            return true;
+        if (c == 0xEF && i + 1 < s.size())
+        {
+            const uint8_t n = static_cast<uint8_t>(s[i + 1]);
+            if (n >= 0xAD && n <= 0xBB)
+                return true;
+        }
+    }
+    return false;
+}
+
+static std::string MoveLeadingTagAfterName(const std::string& src)
+{
+    const size_t sep = src.rfind(" - ");
+    if (sep == std::string::npos)
+        return src;
+
+    const std::string name = src.substr(0, sep);
+    if (name.size() < 3 || name[0] != '[')
+        return src;
+
+    const size_t close = name.find(']');
+    if (close == std::string::npos || close + 1 >= name.size() || name[close + 1] != ' ')
+        return src;
+
+    const std::string tag = name.substr(0, close + 1);
+    const std::string rest = TrimAscii(name.substr(close + 2));
+    if (rest.empty() || !HasArabicBytes(tag))
+        return src;
+
+    return rest + " " + tag + src.substr(sep);
+}
+
 static std::string SwapSlashFormat(const std::string& src)
 {
     const size_t sep = src.find(" / ");
@@ -336,6 +380,18 @@ static bool ForceMainTextAlignment(void* thisPtr, uint8_t alignValue)
     return SafeWriteU8(reinterpret_cast<uint8_t*>(mainNode) + 0xD8, alignValue);
 }
 
+static bool ContainsArabicMark(const std::string& s)
+{
+    for (size_t i = 0; i + 1 < s.size(); ++i)
+    {
+        const uint8_t lead = static_cast<uint8_t>(s[i]);
+        const uint8_t next = static_cast<uint8_t>(s[i + 1]);
+        if (lead == 0xD9 && ((next >= 0x8B && next <= 0x9F) || next == 0xB0))
+            return true;
+    }
+    return false;
+}
+
 static void ApplyArabicMissionListMainText(void* thisPtr)
 {
     if (!thisPtr)
@@ -348,7 +404,7 @@ static void ApplyArabicMissionListMainText(void* thisPtr)
     if (!SafeReadCString(mainBuf, 0x80, before))
         return;
 
-    const std::string after = SwapNumericDashFormat(before);
+    const std::string after = MoveLeadingTagAfterName(SwapNumericDashFormat(before));
     if (after == before)
         return;
 
@@ -361,7 +417,7 @@ static void ApplyArabicMissionListMainText(void* thisPtr)
     if (!SafeWriteCString(mainBuf, 0x80, after.c_str()))
         return;
 
-    if (kEnableReapplyMainText)
+    if (kEnableReapplyMainText || ContainsArabicMark(after))
     {
         if (!ReapplyMainText718(thisPtr))
         {
@@ -369,8 +425,8 @@ static void ApplyArabicMissionListMainText(void* thisPtr)
         }
     }
 
-    Log("[MbDvcMissionListRecordCallFunc::Start] main before: %s\n", before.c_str());
-    Log("[MbDvcMissionListRecordCallFunc::Start] main after : %s\n", after.c_str());
+    LogDetail("[MbDvcMissionListRecordCallFunc::Start] main before: %s\n", before.c_str());
+    LogDetail("[MbDvcMissionListRecordCallFunc::Start] main after : %s\n", after.c_str());
 }
 
 static void ApplyArabicMissionListSlashText(void* thisPtr)
@@ -407,13 +463,13 @@ static void ApplyArabicMissionListSlashText(void* thisPtr)
         return;
     }
 
-    Log("[MbDvcMissionListRecordCallFunc::Start] slash before: %s\n", before.c_str());
-    Log("[MbDvcMissionListRecordCallFunc::Start] slash after : %s\n", after.c_str());
+    LogDetail("[MbDvcMissionListRecordCallFunc::Start] slash before: %s\n", before.c_str());
+    LogDetail("[MbDvcMissionListRecordCallFunc::Start] slash after : %s\n", after.c_str());
 }
 
 static void __fastcall hkMbDvcMissionListRecordCallFunc_Start(void* thisPtr, uint64_t param_2)
 {
-    Log("[MbDvcMissionListRecordCallFunc::Start] hk hit.\n");
+    LogDetail("[MbDvcMissionListRecordCallFunc::Start] hk hit.\n");
 
     if (gOrigStart)
         gOrigStart(thisPtr, param_2);
@@ -424,7 +480,7 @@ static void __fastcall hkMbDvcMissionListRecordCallFunc_Start(void* thisPtr, uin
     ApplyArabicMissionListMainText(thisPtr);
     ApplyArabicMissionListSlashText(thisPtr);
 
-    if (kEnableForcedAlignment)
+    if (kEnableForcedAlignment && !(gAddr.MbDvcMissionListRecord_Vtable && gAddr.UixUtility_RefreshRecordTextScroll))
     {
         if (!ForceMainTextAlignment(thisPtr, kForcedMainTextAlign))
             Log("[MbDvcMissionListRecordCallFunc::Start] ForceMainTextAlignment failed.\n");
@@ -441,7 +497,7 @@ bool InstallMbDvcMissionListRecordCallFuncStartArabicFormatHook(HMODULE hGame)
         return false;
     }
 
-    gIsArabLanguage = reinterpret_cast<IsArabLanguage_t>(gAddr.IsArabLanguage);
+    gIsArabLanguage = &RL_IsRightToLeft;
     gTarget = reinterpret_cast<void*>(gAddr.MbDvcMissionListRecordCallFuncStart);
 
     if (!gTarget)

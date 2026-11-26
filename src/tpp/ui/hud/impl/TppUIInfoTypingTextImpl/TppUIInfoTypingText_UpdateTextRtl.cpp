@@ -1,9 +1,11 @@
 #include "pch.h"
 #include <Windows.h>
 #include <cstdint>
+#include <atomic>
 #include "MinHook.h"
 #include "log.h"
 #include "AddressSet.h"
+#include "LanguageProfile.h"
 
 namespace
 {
@@ -11,6 +13,7 @@ namespace
     using UpdateText_t = uint64_t(__fastcall*)(void* thisPtr, void* line);
     using GlyphByteLen_t = uint32_t(__fastcall*)(void* langSvc, const char* text, int32_t glyphCount, int32_t flag);
     using SetText_t = void(__fastcall*)(void* renderer, void* node, void* region, const char* text, uint64_t flag);
+    using SetTranslateX_t = void(__fastcall*)(void* renderer, void* node, float x);
 
     static IsArabLanguage_t gIsArabLanguage = nullptr;
     static UpdateText_t gOrigUpdateText = nullptr;
@@ -22,21 +25,26 @@ namespace
 
     static constexpr size_t VT_GLYPH_BYTE_LEN = 0x250;
     static constexpr size_t VT_SETTEXT = 0x708;
+    static constexpr size_t VT_SET_TRANSLATE_X = 0x350;
+    static constexpr size_t OFF_INFO = 0x48;
+    static constexpr size_t INFO_OFFSET_X = 0x80;
+    static constexpr size_t UNIT_WIDTH = 0x14;
 
     static constexpr size_t LINE_STATE = 0x00;
     static constexpr size_t LINE_REVEAL = 0x04;
     static constexpr size_t LINE_TOTAL = 0x08;
     static constexpr size_t LINE_REGION = 0x10;
+    static constexpr size_t LINE_PARENT = 0x18;
     static constexpr size_t LINE_NODE_A = 0x20;
     static constexpr size_t LINE_NODE_B = 0x28;
     static constexpr size_t LINE_SOURCE = 0x30;
     static constexpr size_t LINE_VISIBLE = 0xF8;
     static constexpr size_t SOURCE_CAPACITY = 0xC8;
     static constexpr size_t VISIBLE_CAPACITY = 0xC8;
+    static constexpr size_t LINE_BASE_X = 0x1C4;
 
-    static constexpr size_t OFF_ALIGN = 0xD8;
-    static constexpr size_t OFF_ALIGN_DRIVER = 0xDA;
-    static constexpr uint8_t ALIGN_RIGHT = 2;
+    static constexpr float ANCHOR_FROM_BASE = 35.0f;
+    static constexpr float WIDTH_TO_TRANSLATE = 0.1f;
 
     static constexpr uint8_t STATE_TYPING = 2;
     static constexpr int32_t GLYPH_FLAG = 1;
@@ -81,19 +89,6 @@ static bool ReadU8(const void* addr, uint8_t& out)
     __except (EXCEPTION_EXECUTE_HANDLER)
     {
         out = 0xFF;
-        return false;
-    }
-}
-
-static bool WriteU8(void* addr, uint8_t value)
-{
-    __try
-    {
-        *reinterpret_cast<uint8_t*>(addr) = value;
-        return true;
-    }
-    __except (EXCEPTION_EXECUTE_HANDLER)
-    {
         return false;
     }
 }
@@ -192,20 +187,64 @@ static bool GetOwnerSub(void* thisPtr, size_t subOffset, void*& out)
     return ReadPtr(reinterpret_cast<uint8_t*>(owner) + subOffset, out) && out != nullptr;
 }
 
-static void RightAlignNode(void* node)
+static bool CallSetTranslateX(void* renderer, void* node, float x)
 {
-    if (!node)
+    __try
+    {
+        void* vtable = *reinterpret_cast<void* const*>(renderer);
+        if (!vtable)
+            return false;
+
+        SetTranslateX_t fn = *reinterpret_cast<SetTranslateX_t const*>(
+            reinterpret_cast<const uint8_t*>(vtable) + VT_SET_TRANSLATE_X);
+        if (!fn)
+            return false;
+
+        fn(renderer, node, x);
+        return true;
+    }
+    __except (EXCEPTION_EXECUTE_HANDLER)
+    {
+        return false;
+    }
+}
+
+static bool ReadF32(const void* addr, float& out)
+{
+    __try
+    {
+        out = *reinterpret_cast<const float*>(addr);
+        return true;
+    }
+    __except (EXCEPTION_EXECUTE_HANDLER)
+    {
+        out = 0.0f;
+        return false;
+    }
+}
+
+static void PinRowRightEdge(void* thisPtr, void* line)
+{
+    auto* row = static_cast<uint8_t*>(line);
+    uint8_t firstByte = 0;
+    if (!ReadU8(row + LINE_SOURCE, firstByte) || firstByte == 0)
         return;
 
-    uint8_t d8 = 0xFF;
-    uint8_t da = 0xFF;
-    ReadU8(reinterpret_cast<uint8_t*>(node) + OFF_ALIGN, d8);
-    ReadU8(reinterpret_cast<uint8_t*>(node) + OFF_ALIGN_DRIVER, da);
+    void* region = nullptr;
+    void* parent = nullptr;
+    void* info = nullptr;
+    void* renderer = nullptr;
+    float width = 0.0f;
+    float base = 0.0f;
+    float offsetX = 0.0f;
+    if (!ReadPtr(row + LINE_REGION, region) || !region || !ReadPtr(row + LINE_PARENT, parent) || !parent ||
+        !ReadPtr(static_cast<uint8_t*>(thisPtr) + OFF_INFO, info) || !info ||
+        !GetOwnerSub(thisPtr, OFF_RENDERER, renderer) ||
+        !ReadF32(static_cast<uint8_t*>(region) + UNIT_WIDTH, width) || !(width > 0.0f) ||
+        !ReadF32(row + LINE_BASE_X, base) || !ReadF32(static_cast<uint8_t*>(info) + INFO_OFFSET_X, offsetX))
+        return;
 
-    if (d8 <= 3)
-        WriteU8(reinterpret_cast<uint8_t*>(node) + OFF_ALIGN, ALIGN_RIGHT);
-    if (da <= 3)
-        WriteU8(reinterpret_cast<uint8_t*>(node) + OFF_ALIGN_DRIVER, ALIGN_RIGHT);
+    CallSetTranslateX(renderer, parent, base + ANCHOR_FROM_BASE + offsetX - width * WIDTH_TO_TRANSLATE);
 }
 
 static void ApplyRtlTyping(void* thisPtr, void* line)
@@ -251,9 +290,6 @@ static void ApplyRtlTyping(void* thisPtr, void* line)
             }
         }
     }
-
-    RightAlignNode(nodeA);
-    RightAlignNode(nodeB);
 }
 
 static uint64_t __fastcall hkUpdateText(void* thisPtr, void* line)
@@ -261,7 +297,10 @@ static uint64_t __fastcall hkUpdateText(void* thisPtr, void* line)
     const uint64_t ret = gOrigUpdateText ? gOrigUpdateText(thisPtr, line) : 0;
 
     if (thisPtr && line && IsArabicSafe())
+    {
         ApplyRtlTyping(thisPtr, line);
+        PinRowRightEdge(thisPtr, line);
+    }
 
     return ret;
 }
@@ -276,7 +315,7 @@ bool InstallTppUIInfoTypingTextUpdateTextRtlHook(HMODULE hGame)
         return false;
     }
 
-    gIsArabLanguage = reinterpret_cast<IsArabLanguage_t>(gAddr.IsArabLanguage);
+    gIsArabLanguage = &RL_IsRightToLeft;
     gTarget = reinterpret_cast<void*>(gAddr.TppUIInfoTypingText_UpdateText);
     if (!gTarget)
         return false;

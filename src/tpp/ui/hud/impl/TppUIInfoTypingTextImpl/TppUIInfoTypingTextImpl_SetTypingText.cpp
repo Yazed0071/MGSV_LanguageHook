@@ -7,11 +7,12 @@
 #include "MinHook.h"
 #include "log.h"
 #include "AddressSet.h"
+#include "LanguageProfile.h"
 
 namespace
 {
     using IsArabLanguage_t = bool(__cdecl*)();
-    using TppUIInfoTypingTextImpl_SetTypingText_t = void(__fastcall*)(void* thisPtr);
+    using TppUIInfoTypingTextImpl_SetTypingText_t = bool(__fastcall*)(void* thisPtr);
 
     static IsArabLanguage_t gIsArabLanguage = nullptr;
     static TppUIInfoTypingTextImpl_SetTypingText_t gOrigSetTypingText = nullptr;
@@ -209,15 +210,14 @@ static void ApplyArabicTypingRows(void* thisPtr)
 }
 
 /* Hook for TppUIInfoTypingTextImpl::SetTypingText(this). */
-static void __fastcall hkTppUIInfoTypingTextImpl_SetTypingText(void* thisPtr)
+static bool __fastcall hkTppUIInfoTypingTextImpl_SetTypingText(void* thisPtr)
 {
-    if (gOrigSetTypingText)
-        gOrigSetTypingText(thisPtr);
+    const bool result = gOrigSetTypingText ? gOrigSetTypingText(thisPtr) : false;
 
-    if (!IsArabicSafe())
-        return;
+    if (IsArabicSafe())
+        ApplyArabicTypingRows(thisPtr);
 
-    ApplyArabicTypingRows(thisPtr);
+    return result;
 }
 
 /* Installs the SetTypingText Arabic hook. hGame = game module handle. */
@@ -231,7 +231,7 @@ bool InstallTppUIInfoTypingTextImplSetTypingTextArabicHook(HMODULE hGame)
         return false;
     }
 
-    gIsArabLanguage = reinterpret_cast<IsArabLanguage_t>(gAddr.IsArabLanguage);
+    gIsArabLanguage = &RL_IsRightToLeft;
     gTarget = reinterpret_cast<void*>(gAddr.TppUIInfoTypingTextImpl_SetTypingText);
     if (!gTarget)
         return false;

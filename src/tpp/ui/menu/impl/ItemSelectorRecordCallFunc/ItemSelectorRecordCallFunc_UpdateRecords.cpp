@@ -7,6 +7,7 @@
 #include "MinHook.h"
 #include "log.h"
 #include "AddressSet.h"
+#include "LanguageProfile.h"
 
 namespace
 {
@@ -242,8 +243,8 @@ static void ApplyArabicUpdateRecordsFix(void* thisPtr)
         return;
     }
 
-    Log("[ItemSelectorRecordCallFunc::UpdateRecords] before: %s\n", before.c_str());
-    Log("[ItemSelectorRecordCallFunc::UpdateRecords] after : %s\n", after.c_str());
+    LogDetail("[ItemSelectorRecordCallFunc::UpdateRecords] before: %s\n", before.c_str());
+    LogDetail("[ItemSelectorRecordCallFunc::UpdateRecords] after : %s\n", after.c_str());
 }
 
 /* Hook for ItemSelectorRecordCallFunc::UpdateRecords(this). */
@@ -269,7 +270,7 @@ bool InstallItemSelectorRecordCallFuncUpdateRecordsArabicHook(HMODULE hGame)
         return false;
     }
 
-    gIsArabLanguage = reinterpret_cast<IsArabLanguage_t>(gAddr.IsArabLanguage);
+    gIsArabLanguage = &RL_IsRightToLeft;
     gTarget = reinterpret_cast<void*>(gAddr.ItemSelectorRecordCallFunc_UpdateRecords);
     if (!gTarget)
         return false;

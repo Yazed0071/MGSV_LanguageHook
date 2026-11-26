@@ -10,6 +10,7 @@
 #include "MinHook.h"
 #include "log.h"
 #include "AddressSet.h"
+#include "LanguageProfile.h"
 
 namespace
 {
@@ -381,7 +382,7 @@ bool InstallMbTitleEvSetMenuNameTextArabicHook(HMODULE hGame)
         return false;
     }
 
-    gIsArabLanguage = reinterpret_cast<IsArabLanguage_t>(gAddr.IsArabLanguage);
+    gIsArabLanguage = &RL_IsRightToLeft;
     gGetLangText = reinterpret_cast<GetLangText_t>(gAddr.GetLangText);
     gSetTextForModelNodeText = reinterpret_cast<SetTextForModelNodeText_t>(gAddr.SetTextForModelNodeText);
     gTarget = reinterpret_cast<void*>(gAddr.SetMenuNameText);

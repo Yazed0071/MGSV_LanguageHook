@@ -5,6 +5,7 @@
 #include "MinHook.h"
 #include "log.h"
 #include "AddressSet.h"
+#include "LanguageProfile.h"
 
 namespace
 {
@@ -169,7 +170,7 @@ bool InstallMbDvcSideOpsCallbackImplShowCompleteRatioArabicTextHook(HMODULE hGam
         return false;
     }
 
-    gIsArabLanguage = reinterpret_cast<IsArabLanguage_t>(gAddr.IsArabLanguage);
+    gIsArabLanguage = &RL_IsRightToLeft;
     gGetLangText = reinterpret_cast<GetLangText_t>(gAddr.GetLangText);
     gTarget = reinterpret_cast<void*>(gAddr.MbDvcSideOpsCallbackImpl_ShowCompleteRatio);
 

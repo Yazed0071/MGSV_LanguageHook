@@ -13,17 +13,30 @@
 #define VRL_ENABLE_DINPUT8_PROXY 1
 #define VRL_PROXY_ONLY_IF_NAMED_DINPUT8 1
 
+bool InstallLanguageProfile(HMODULE hGame);
 bool InstallGameLangStateKeepCJKHook(HMODULE hGame);
 bool InstallLangSelectPopupPagedRewriteHooks(HMODULE hGame);
 bool InstallLanguageHook(HMODULE hGame);
 bool InstallShowTextureLogoArabicHook(HMODULE hGame);
 bool InstallChapterTelopArabicFtexHook(HMODULE hGame);
 bool Install_UnkLoadUIDefaultDataFunc_Hook();
+bool InitFoxAssetExists(HMODULE hGame);
+bool InstallArabicPackRedirectHook(HMODULE hGame);
+void RemoveArabicPackRedirectHook();
+bool InitAvatarEditCameraMirror(HMODULE hGame);
+void ShutdownAvatarEditCameraMirror();
 bool InstallUnkLoadTppPartsLangFpkArabicFixHook(HMODULE hGame);
 bool InstallGetTipsLangBlockPathHook(HMODULE hGame);
+bool InstallSubtitleStreamLineLimit(HMODULE hGame);
+void RemoveSubtitleStreamLineLimit();
+bool InstallSubtitleAreaPackKeeper(HMODULE hGame);
+void RemoveSubtitleAreaPackKeeper();
 bool InstallGetPauseHelpLangBlockPathHook(HMODULE hGame);
 bool Install_SetLuaFunctions_Hook();
+bool InstallLuaCrashReport();
+void RemoveLuaCrashReport();
 bool InstallDisplayTimerEvCallSetDisplayTextHook(HMODULE hGame);
+bool InstallBinoMicMirrorGaugeHook(HMODULE hGame);
 bool InstallMbLogViewerBodyLayoutSetMainTextArabicHook(HMODULE hGame);
 bool InstallCustomizeSlotSelectorSetupListElementWalkerGearHook(HMODULE hGame);
 bool InstallGamePauseMenuArabicTextHooks(HMODULE hGame);
@@ -56,6 +69,40 @@ bool InstallPopupEvCallSettingPopupArabicLeftToRightAlignHook(HMODULE hGame);
 bool InstallSetEquipBackgroundTextureArabicHook(HMODULE hGame);
 bool InstallMbDvcSideOpsCallbackImplUpdateInformationTextBoxArabicHook(HMODULE hGame);
 bool InstallArabicScrollReversalHook(HMODULE hGame);
+bool InstallCreateTextUnitsArabicWrapHook(HMODULE hGame);
+bool InstallGetUTF8TextFromBackArabicRevealHook(HMODULE hGame);
+bool InstallArabicGlyphRenderingHooks(HMODULE hGame);
+bool InstallFntHarakatHook(HMODULE hGame);
+bool InstallArabicRubyLayoutHook(HMODULE hGame);
+bool InstallEpilogueControllerSetupAssetArabicHook(HMODULE hGame);
+bool InstallRadioButtonGuideArabicMirrorHook(HMODULE hGame);
+bool InstallTppUIMusicTelopArabicRightAlignHook(HMODULE hGame);
+bool InstallMbTitleEvUpdateArabicHook(HMODULE hGame);
+bool InstallMbCommonPopupActUpdateArabicHook(HMODULE hGame);
+bool InstallTppUIResultImplRadioFileLabelsHook(HMODULE hGame);
+bool InstallMenuTitleArabicBreadcrumbHook(HMODULE hGame);
+bool InstallDataBaseCallbackImplArabicInfoTextHook(HMODULE hGame);
+bool InstallUixUtilityArabicRecordRowsHook(HMODULE hGame);
+bool InstallCombatDeployCallbackImplRefreshMissionTextBoxArabicHook(HMODULE hGame);
+bool InstallWorldMarkerLengthTextArabicHook(HMODULE hGame);
+bool InstallActiveSonarDistanceArabicHook(HMODULE hGame);
+bool InstallStrncpySArabicGuardHook(HMODULE hGame);
+bool InstallMissionSkillViewArabicHook(HMODULE hGame);
+bool InstallMbDvcResourceRecordAmountColumnArabicHook(HMODULE hGame);
+bool InstallPauseHelpTutorialPopupArabicHook(HMODULE hGame);
+bool InstallPauseHelpRefreshHelpPageArabicHook(HMODULE hGame);
+bool InstallPauseHelpRefreshHeaderTextArabicHook(HMODULE hGame);
+bool InstallUiUtilitySetPadButtonPromptArabicHook(HMODULE hGame);
+bool InstallGradeMarkRtlHook(HMODULE hGame);
+bool InstallLongArabicAnnounceTextHook(HMODULE hGame);
+bool InstallUiInspectorHook(HMODULE hGame);
+bool InstallActSetTextUpdateArabicAlignHook(HMODULE hGame);
+bool InstallModelNodeTextDrawArabicAlignHook(HMODULE hGame);
+bool InstallStaffFullNameArabicHooks(HMODULE hGame);
+bool InstallServerLanguageFallbackHooks(HMODULE hGame);
+bool InstallCassetteSeekButtonSwapHook(HMODULE hGame);
+bool InstallMapMaskMirrorHook(HMODULE hGame);
+bool InstallSecurityDetailValueXMirrorHook(HMODULE hGame);
 
 void RemoveGameLangStateKeepCJKHook();
 void RemoveLangSelectPopupPagedRewriteHooks();
@@ -67,6 +114,7 @@ void RemoveGetTipsLangBlockPathHook();
 void RemoveGetPauseHelpLangBlockPathHook();
 bool Uninstall_SetLuaFunctions_Hook();
 void RemoveDisplayTimerEvCallSetDisplayTextHook();
+void RemoveBinoMicMirrorGaugeHook();
 void RemoveMbLogViewerBodyLayoutSetMainTextArabicHook();
 void RemoveCustomizeSlotSelectorSetupListElementWalkerGearHook();
 void RemoveGamePauseMenuArabicTextHooks();
@@ -99,12 +147,48 @@ void RemovePopupEvCallSettingPopupArabicLeftToRightAlignHook();
 void RemoveSetEquipBackgroundTextureArabicHook();
 void RemoveMbDvcSideOpsCallbackImplUpdateInformationTextBoxArabicHook();
 void RemoveArabicScrollReversalHook();
+void RemoveCreateTextUnitsArabicWrapHook();
+void RemoveGetUTF8TextFromBackArabicRevealHook();
+void RemoveArabicGlyphRenderingHooks();
+void RemoveFntHarakatHook();
+void RemoveArabicRubyLayoutHook();
+void RemoveEpilogueControllerSetupAssetArabicHook();
+void RemoveRadioButtonGuideArabicMirrorHook();
+void RemoveTppUIMusicTelopArabicRightAlignHook();
+void RemoveMbTitleEvUpdateArabicHook();
+void RemoveMbCommonPopupActUpdateArabicHook();
+void RemoveTppUIResultImplRadioFileLabelsHook();
+void RemoveMenuTitleArabicBreadcrumbHook();
+void RemoveDataBaseCallbackImplArabicInfoTextHook();
+void RemoveUixUtilityArabicRecordRowsHook();
+void RemoveCombatDeployCallbackImplRefreshMissionTextBoxArabicHook();
+void RemoveWorldMarkerLengthTextArabicHook();
+void RemoveActiveSonarDistanceArabicHook();
+void RemoveStrncpySArabicGuardHook();
+void RemoveMissionSkillViewArabicHook();
+void RemoveMbDvcResourceRecordAmountColumnArabicHook();
+void RemovePauseHelpTutorialPopupArabicHook();
+void RemovePauseHelpRefreshHelpPageArabicHook();
+void RemovePauseHelpRefreshHeaderTextArabicHook();
+void RemoveUiUtilitySetPadButtonPromptArabicHook();
+void RemoveGradeMarkRtlHook();
+void RemoveLongArabicAnnounceTextHook();
+void RemoveUiInspectorHook();
+void RemoveActSetTextUpdateArabicAlignHook();
+void RemoveModelNodeTextDrawArabicAlignHook();
+void RemoveStaffFullNameArabicHooks();
+void RemoveServerLanguageFallbackHooks();
+void RemoveCassetteSeekButtonSwapHook();
+void RemoveMapMaskMirrorHook();
+void RemoveSecurityDetailValueXMirrorHook();
 
 namespace
 {
     static std::atomic_bool gStarted{ false };
     static std::atomic_bool gInitialized{ false };
     static std::atomic_bool gConsoleReady{ false };
+    static HANDLE gInstanceRecord = nullptr;
+    static bool gIdleCopy = false;
 }
 
 #if VRL_ENABLE_DINPUT8_PROXY
@@ -322,8 +406,10 @@ static void SetupConsole()
     #endif
 }
 
-static void InstallAll(HMODULE hGame)
+static void InstallStartupHooks(HMODULE hGame)
 {
+    InstallLanguageProfile(hGame);
+
     if (!Install_SetLuaFunctions_Hook())
         Log("[DLL] Failed: Install_SetLuaFunctions_Hook\n");
 
@@ -342,7 +428,10 @@ static void InstallAll(HMODULE hGame)
     if (!InstallChapterTelopArabicFtexHook(hGame))
         Log("[DLL] Failed: InstallChapterTelopArabicFtexHook\n");
 
-    if (!Install_UnkLoadUIDefaultDataFunc_Hook())
+    InitFoxAssetExists(hGame);
+    InitAvatarEditCameraMirror(hGame);
+
+    if (!InstallArabicPackRedirectHook(hGame) && !Install_UnkLoadUIDefaultDataFunc_Hook())
         Log("[DLL] Failed: Install_UnkLoadUIDefaultDataFunc_Hook\n");
 
     if (!InstallUnkLoadTppPartsLangFpkArabicFixHook(hGame))
@@ -351,9 +440,26 @@ static void InstallAll(HMODULE hGame)
     if (!InstallGetTipsLangBlockPathHook(hGame))
         Log("[DLL] Failed: InstallGetTipsLangBlockPathHook\n");
 
+    if (!InstallSubtitleStreamLineLimit(hGame))
+        Log("[DLL] Failed: InstallSubtitleStreamLineLimit\n");
+
+    if (!InstallSubtitleAreaPackKeeper(hGame))
+        Log("[DLL] Failed: InstallSubtitleAreaPackKeeper\n");
+
+    if (!InstallArabicGlyphRenderingHooks(hGame))
+        Log("[DLL] Failed: InstallArabicGlyphRenderingHooks\n");
+}
+
+static void InstallAll(HMODULE hGame)
+{
+    if (!InstallLuaCrashReport())
+        Log("[DLL] Failed: InstallLuaCrashReport\n");
 
     if (!InstallDisplayTimerEvCallSetDisplayTextHook(hGame))
         Log("[DLL] Failed: InstallDisplayTimerEvCallSetDisplayTextHook\n");
+
+    if (!InstallBinoMicMirrorGaugeHook(hGame))
+        Log("[DLL] Failed: InstallBinoMicMirrorGaugeHook\n");
 
     if (!InstallMbLogViewerBodyLayoutSetMainTextArabicHook(hGame))
         Log("[DLL] Failed: InstallMbLogViewerBodyLayoutSetMainTextArabicHook\n");
@@ -403,6 +509,9 @@ static void InstallAll(HMODULE hGame)
     if (!InstallEquipDetailsCallbackImplCreateCarryingDifferenceTextArabicHook(hGame))
         Log("[DLL] Failed: InstallEquipDetailsCallbackImplCreateCarryingDifferenceTextArabicHook\n");
 
+    if (!InstallEquipDetailsCallbackImplCreateBulletDifferenceTextArabicHook(hGame))
+        Log("[DLL] Failed: InstallEquipDetailsCallbackImplCreateBulletDifferenceTextArabicHook\n");
+
     if (!InstallTppUIInfoTypingTextImplSetTypingTextArabicHook(hGame))
         Log("[DLL] Failed: InstallTppUIInfoTypingTextImplSetTypingTextArabicHook\n");
 
@@ -447,10 +556,110 @@ static void InstallAll(HMODULE hGame)
 
     if (!InstallArabicScrollReversalHook(hGame))
         Log("[DLL] Failed: InstallArabicScrollReversalHook\n");
+
+    if (!InstallCreateTextUnitsArabicWrapHook(hGame))
+        Log("[DLL] Failed: InstallCreateTextUnitsArabicWrapHook\n");
+
+    if (!InstallGetUTF8TextFromBackArabicRevealHook(hGame))
+        Log("[DLL] Failed: InstallGetUTF8TextFromBackArabicRevealHook\n");
+
+    if (!InstallArabicRubyLayoutHook(hGame))
+        Log("[DLL] Failed: InstallArabicRubyLayoutHook\n");
+
+    if (!InstallEpilogueControllerSetupAssetArabicHook(hGame))
+        Log("[DLL] Failed: InstallEpilogueControllerSetupAssetArabicHook\n");
+
+    if (!InstallRadioButtonGuideArabicMirrorHook(hGame))
+        Log("[DLL] Failed: InstallRadioButtonGuideArabicMirrorHook\n");
+
+    if (!InstallTppUIMusicTelopArabicRightAlignHook(hGame))
+        Log("[DLL] Failed: InstallTppUIMusicTelopArabicRightAlignHook\n");
+
+    if (!InstallMbTitleEvUpdateArabicHook(hGame))
+        Log("[DLL] Failed: InstallMbTitleEvUpdateArabicHook\n");
+
+    if (!InstallMbCommonPopupActUpdateArabicHook(hGame))
+        Log("[DLL] Failed: InstallMbCommonPopupActUpdateArabicHook\n");
+
+    if (!InstallTppUIResultImplRadioFileLabelsHook(hGame))
+        Log("[DLL] Failed: InstallTppUIResultImplRadioFileLabelsHook\n");
+
+    if (!InstallMenuTitleArabicBreadcrumbHook(hGame))
+        Log("[DLL] Failed: InstallMenuTitleArabicBreadcrumbHook\n");
+
+    if (!InstallDataBaseCallbackImplArabicInfoTextHook(hGame))
+        Log("[DLL] Failed: InstallDataBaseCallbackImplArabicInfoTextHook\n");
+
+    if (!InstallUixUtilityArabicRecordRowsHook(hGame))
+        Log("[DLL] Failed: InstallUixUtilityArabicRecordRowsHook\n");
+
+    if (!InstallCombatDeployCallbackImplRefreshMissionTextBoxArabicHook(hGame))
+        Log("[DLL] Failed: InstallCombatDeployCallbackImplRefreshMissionTextBoxArabicHook\n");
+
+    if (!InstallWorldMarkerLengthTextArabicHook(hGame))
+        Log("[DLL] Failed: InstallWorldMarkerLengthTextArabicHook\n");
+
+    if (!InstallActiveSonarDistanceArabicHook(hGame))
+        Log("[DLL] Failed: InstallActiveSonarDistanceArabicHook\n");
+
+    if (!InstallStrncpySArabicGuardHook(hGame))
+        Log("[DLL] Failed: InstallStrncpySArabicGuardHook\n");
+
+    if (!InstallMissionSkillViewArabicHook(hGame))
+        Log("[DLL] Failed: InstallMissionSkillViewArabicHook\n");
+
+    if (!InstallMbDvcResourceRecordAmountColumnArabicHook(hGame))
+        Log("[DLL] Failed: InstallMbDvcResourceRecordAmountColumnArabicHook\n");
+
+    if (!InstallPauseHelpTutorialPopupArabicHook(hGame))
+        Log("[DLL] Failed: InstallPauseHelpTutorialPopupArabicHook\n");
+
+    if (!InstallPauseHelpRefreshHelpPageArabicHook(hGame))
+        Log("[DLL] Failed: InstallPauseHelpRefreshHelpPageArabicHook\n");
+    if (!InstallPauseHelpRefreshHeaderTextArabicHook(hGame))
+        Log("[DLL] Failed: InstallPauseHelpRefreshHeaderTextArabicHook\n");
+
+    if (!InstallUiUtilitySetPadButtonPromptArabicHook(hGame))
+        Log("[DLL] Failed: InstallUiUtilitySetPadButtonPromptArabicHook\n");
+
+    if (!InstallGradeMarkRtlHook(hGame))
+        Log("[DLL] Failed: InstallGradeMarkRtlHook\n");
+
+    if (!InstallLongArabicAnnounceTextHook(hGame))
+        Log("[DLL] Failed: InstallLongArabicAnnounceTextHook\n");
+
+    if (!InstallUiInspectorHook(hGame))
+        Log("[DLL] Failed: InstallUiInspectorHook\n");
+
+    if (!InstallActSetTextUpdateArabicAlignHook(hGame))
+        Log("[DLL] Failed: InstallActSetTextUpdateArabicAlignHook\n");
+
+    if (!InstallModelNodeTextDrawArabicAlignHook(hGame))
+        Log("[DLL] Failed: InstallModelNodeTextDrawArabicAlignHook\n");
+
+    if (!InstallStaffFullNameArabicHooks(hGame))
+        Log("[DLL] Failed: InstallStaffFullNameArabicHooks\n");
+
+    if (!InstallServerLanguageFallbackHooks(hGame))
+        Log("[DLL] Failed: InstallServerLanguageFallbackHooks\n");
+
+    if (!InstallCassetteSeekButtonSwapHook(hGame))
+        Log("[DLL] Failed: InstallCassetteSeekButtonSwapHook\n");
+
+    if (!InstallMapMaskMirrorHook(hGame))
+        Log("[DLL] Failed: InstallMapMaskMirrorHook\n");
+
+    if (!InstallSecurityDetailValueXMirrorHook(hGame))
+        Log("[DLL] Failed: InstallSecurityDetailValueXMirrorHook\n");
+
+    if (!InstallFntHarakatHook(hGame))
+        Log("[DLL] Failed: InstallFntHarakatHook\n");
+
 }
 
 static void RemoveAll()
 {
+    RemoveLuaCrashReport();
     Uninstall_SetLuaFunctions_Hook();
     RemoveGameLangStateKeepCJKHook();
     RemoveLangSelectPopupPagedRewriteHooks();
@@ -458,8 +667,13 @@ static void RemoveAll()
     RemoveShowTextureLogoArabicHook();
     RemoveChapterTelopArabicFtexHook();
     RemoveUnkLoadTppPartsLangFpkArabicFixHook();
+    RemoveArabicPackRedirectHook();
+    ShutdownAvatarEditCameraMirror();
     RemoveGetTipsLangBlockPathHook();
+    RemoveSubtitleStreamLineLimit();
+    RemoveSubtitleAreaPackKeeper();
     RemoveDisplayTimerEvCallSetDisplayTextHook();
+    RemoveBinoMicMirrorGaugeHook();
     RemoveMbLogViewerBodyLayoutSetMainTextArabicHook();
     RemoveCustomizeSlotSelectorSetupListElementWalkerGearHook();
     RemoveGamePauseMenuArabicTextHooks();
@@ -476,6 +690,7 @@ static void RemoveAll()
     RemoveMbDvcSideOpsRecordCallFuncViewRecordArabicHook();
     RemoveMissionPreparationCallbackImplSetupMissionNameArabicHook();
     RemoveEquipDetailsCallbackImplCreateCarryingDifferenceTextArabicHook();
+    RemoveEquipDetailsCallbackImplCreateBulletDifferenceTextArabicHook();
     RemoveTppUIInfoTypingTextImplSetTypingTextArabicHook();
     RemoveTppUIInfoTypingTextUpdateTextRtlHook();
     RemoveLoadoutPanelInfoRefreshLoadoutTextArabicHook();
@@ -491,7 +706,43 @@ static void RemoveAll()
     RemoveSetEquipBackgroundTextureArabicHook();
     RemoveMbDvcSideOpsCallbackImplUpdateInformationTextBoxArabicHook();
     RemoveArabicScrollReversalHook();
+    RemoveCreateTextUnitsArabicWrapHook();
+    RemoveGetUTF8TextFromBackArabicRevealHook();
+    RemoveArabicGlyphRenderingHooks();
+    RemoveFntHarakatHook();
+    RemoveArabicRubyLayoutHook();
+    RemoveEpilogueControllerSetupAssetArabicHook();
+    RemoveRadioButtonGuideArabicMirrorHook();
+    RemoveTppUIMusicTelopArabicRightAlignHook();
+    RemoveMbTitleEvUpdateArabicHook();
+    RemoveMbCommonPopupActUpdateArabicHook();
+    RemoveTppUIResultImplRadioFileLabelsHook();
+    RemoveMenuTitleArabicBreadcrumbHook();
+    RemoveDataBaseCallbackImplArabicInfoTextHook();
+    RemoveUixUtilityArabicRecordRowsHook();
+    RemoveCombatDeployCallbackImplRefreshMissionTextBoxArabicHook();
+    RemoveWorldMarkerLengthTextArabicHook();
+    RemoveActiveSonarDistanceArabicHook();
+    RemoveStrncpySArabicGuardHook();
+    RemoveMissionSkillViewArabicHook();
+    RemoveMbDvcResourceRecordAmountColumnArabicHook();
+    RemovePauseHelpTutorialPopupArabicHook();
+    RemovePauseHelpRefreshHelpPageArabicHook();
+    RemovePauseHelpRefreshHeaderTextArabicHook();
+    RemoveUiUtilitySetPadButtonPromptArabicHook();
+    RemoveGradeMarkRtlHook();
+    RemoveLongArabicAnnounceTextHook();
+    RemoveUiInspectorHook();
+    RemoveActSetTextUpdateArabicAlignHook();
+    RemoveModelNodeTextDrawArabicAlignHook();
+    RemoveStaffFullNameArabicHooks();
+    RemoveServerLanguageFallbackHooks();
+    RemoveCassetteSeekButtonSwapHook();
+    RemoveMapMaskMirrorHook();
+    RemoveSecurityDetailValueXMirrorHook();
 }
+
+void RL_ShowUnsupportedBuildNotice();
 
 static DWORD WINAPI InitThread(LPVOID)
 {
@@ -512,6 +763,7 @@ static DWORD WINAPI InitThread(LPVOID)
     if (!ResolveAddressSet(hGame))
     {
         Log("[DLL] ResolveAddressSet failed.\n");
+        RL_ShowUnsupportedBuildNotice();
         return 0;
     }
 
@@ -520,7 +772,15 @@ static DWORD WINAPI InitThread(LPVOID)
     if (st != MH_OK && st != MH_ERROR_ALREADY_INITIALIZED)
         return 0;
 
+    BeginHookBatch();
+    InstallStartupHooks(hGame);
+    const int startupApplied = EndHookBatch();
+    Log("[DLL] start-up loader hooks switched on first (MinHook %d)\n", startupApplied);
+
+    BeginHookBatch();
     InstallAll(hGame);
+    const int applied = EndHookBatch();
+    Log("[DLL] all other hooks switched on in one pass (MinHook %d)\n", applied);
 
     gInitialized.store(true);
     Log("[DLL] InitThread done.\n");
@@ -544,9 +804,68 @@ static void UninstallAll(bool processTerminating)
     FreeRealDInput8();
     #endif
 
+    if (gInstanceRecord)
+    {
+        CloseHandle(gInstanceRecord);
+        gInstanceRecord = nullptr;
+    }
+
     fflush(stdout);
     fflush(stderr);
     CloseLog();
+}
+
+static bool ClaimProcessInstance(HMODULE hModule, wchar_t* otherPath, size_t otherCount)
+{
+    wchar_t name[64] = {};
+    swprintf_s(name, L"Local\\V_Restored_Languages.%lu", GetCurrentProcessId());
+    const DWORD bytes = MAX_PATH * sizeof(wchar_t);
+    HANDLE record = CreateFileMappingW(INVALID_HANDLE_VALUE, nullptr, PAGE_READWRITE, 0, bytes, name);
+    if (!record)
+        return true;
+    const bool existed = GetLastError() == ERROR_ALREADY_EXISTS;
+    if (void* view = MapViewOfFile(record, FILE_MAP_ALL_ACCESS, 0, 0, bytes))
+    {
+        wchar_t* path = static_cast<wchar_t*>(view);
+        if (existed)
+            wcsncpy_s(otherPath, otherCount, path, _TRUNCATE);
+        else
+            GetModuleFileNameW(hModule, path, MAX_PATH);
+        UnmapViewOfFile(view);
+    }
+    if (existed)
+    {
+        CloseHandle(record);
+        return false;
+    }
+    gInstanceRecord = record;
+    return true;
+}
+
+static void NoteIdleCopy(HMODULE hModule, const wchar_t* otherPath)
+{
+    wchar_t self[MAX_PATH] = {};
+    GetModuleFileNameW(hModule, self, MAX_PATH);
+    char selfUtf8[MAX_PATH * 3] = {};
+    char otherUtf8[MAX_PATH * 3] = {};
+    WideCharToMultiByte(CP_UTF8, 0, self, -1, selfUtf8, sizeof(selfUtf8), nullptr, nullptr);
+    WideCharToMultiByte(CP_UTF8, 0, (otherPath && *otherPath) ? otherPath : L"another module", -1, otherUtf8,
+                        sizeof(otherUtf8), nullptr, nullptr);
+
+    char notePath[MAX_PATH] = {};
+    GetModuleFileNameA(nullptr, notePath, MAX_PATH);
+    char* lastSlash = strrchr(notePath, '\\');
+    if (lastSlash)
+        *(lastSlash + 1) = '\0';
+    strcat_s(notePath, "MGSV_ArabicHook.2.log");
+
+    FILE* note = nullptr;
+    if (fopen_s(&note, notePath, "w") != 0 || !note)
+        return;
+    fprintf(note, "[DLL] V_Restored_Languages is already running in this game from %s.\n", otherUtf8);
+    fprintf(note, "[DLL] This copy (%s) stays idle, so no hook is installed twice. The DLL was loaded twice - keep only one plugin loader.\n",
+            selfUtf8);
+    fclose(note);
 }
 
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved)
@@ -561,11 +880,21 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved)
         if (!gStarted.compare_exchange_strong(expected, true))
             return TRUE;
 
+        wchar_t otherCopy[MAX_PATH] = {};
+        gIdleCopy = !ClaimProcessInstance(hModule, otherCopy, _countof(otherCopy));
+
         #if VRL_ENABLE_DINPUT8_PROXY
-        InitLog();
+        if (!gIdleCopy)
+            InitLog(2, false);
         if (!LoadRealDInput8IfNeeded(hModule))
             return FALSE;
         #endif
+
+        if (gIdleCopy)
+        {
+            NoteIdleCopy(hModule, otherCopy);
+            return TRUE;
+        }
 
         #if VRL_ENABLE_AUTO_INIT_THREAD
         HANDLE hThread = CreateThread(nullptr, 0, InitThread, nullptr, 0, nullptr);
@@ -580,6 +909,14 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID lpReserved)
 
     case DLL_PROCESS_DETACH:
     {
+        if (gIdleCopy)
+        {
+            #if VRL_ENABLE_DINPUT8_PROXY
+            if (!lpReserved)
+                FreeRealDInput8();
+            #endif
+            return TRUE;
+        }
         UninstallAll(lpReserved != nullptr);
         return TRUE;
     }

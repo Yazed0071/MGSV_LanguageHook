@@ -7,19 +7,30 @@
 #include "MinHook.h"
 #include "log.h"
 #include "AddressSet.h"
+#include "LanguageProfile.h"
 
 namespace
 {
     using IsArabLanguage_t = bool(__cdecl*)();
+    using GetLangText_t = const char* (__fastcall*)(uint64_t langId);
     using LoadingTipsEv_GetTitleText_t =
         uint64_t(__fastcall*)(uint64_t thisPtr, char mode, uint64_t param3, uint8_t param4);
+    using GetTipInfo_t = void(__fastcall*)(void* source, uint8_t index, uint64_t* id0, uint64_t* titleId,
+                                           uint64_t* id2, int* page, int* pageCount);
+
+    constexpr uint64_t kEmptyLangId = 0xB8A0BF169F98ull;
+    constexpr size_t kGameTitleBufferSize = 100;
+    constexpr size_t kTipSourceOffset = 0x1D0;
+    constexpr size_t kGetTipInfoSlot = 2;
+    constexpr int kTitleMode = 4;
 
     static IsArabLanguage_t gIsArabLanguage = nullptr;
+    static GetLangText_t gGetLangText = nullptr;
     static LoadingTipsEv_GetTitleText_t gOrigGetTitleText = nullptr;
     static void* gTarget = nullptr;
+    static char gFullTitle[1024] = {};
 }
 
-/* Checks Arabic state safely. */
 static bool IsArabicSafe()
 {
     if (!gIsArabLanguage)
@@ -35,7 +46,6 @@ static bool IsArabicSafe()
     }
 }
 
-/* Safely reads a bounded c-string. */
 static bool SafeReadCString(const char* src, size_t maxLen, std::string& out)
 {
     __try
@@ -60,7 +70,6 @@ static bool SafeReadCString(const char* src, size_t maxLen, std::string& out)
     }
 }
 
-/* Safely writes a bounded c-string. */
 static bool SafeWriteCString(char* dst, size_t dstSize, const char* src)
 {
     __try
@@ -83,7 +92,34 @@ static bool SafeWriteCString(char* dst, size_t dstSize, const char* src)
     }
 }
 
-/* Trims one trailing space if present before the "(x/y)" suffix. */
+static bool QueryTipTitle(uint64_t thisPtr, uint8_t index, const char*& title, int& page, int& pageCount)
+{
+    __try
+    {
+        void* source = *reinterpret_cast<void**>(thisPtr + kTipSourceOffset);
+        if (!source || !gGetLangText)
+            return false;
+
+        void** vtable = *reinterpret_cast<void***>(source);
+        if (!vtable || !vtable[kGetTipInfoSlot])
+            return false;
+
+        uint64_t id0 = kEmptyLangId;
+        uint64_t titleId = kEmptyLangId;
+        uint64_t id2 = kEmptyLangId;
+        page = 0;
+        pageCount = 0;
+        reinterpret_cast<GetTipInfo_t>(vtable[kGetTipInfoSlot])(source, index, &id0, &titleId, &id2, &page, &pageCount);
+
+        title = gGetLangText(titleId);
+        return title != nullptr;
+    }
+    __except (EXCEPTION_EXECUTE_HANDLER)
+    {
+        return false;
+    }
+}
+
 static std::string TrimRightOneSpace(const std::string& s)
 {
     if (!s.empty() && s.back() == ' ')
@@ -92,7 +128,6 @@ static std::string TrimRightOneSpace(const std::string& s)
     return s;
 }
 
-/* Rewrites "Movement Basics (1/5)" into "(5/1) Movement Basics". */
 static std::string RewriteLoadingTipsTitleArabic(const std::string& src)
 {
     if (src.empty())
@@ -114,12 +149,11 @@ static std::string RewriteLoadingTipsTitleArabic(const std::string& src)
     if (title.empty())
         return src;
 
-    char rebuilt[128] = {};
+    char rebuilt[1024] = {};
     _snprintf_s(rebuilt, sizeof(rebuilt), _TRUNCATE, "(%d/%d) %s", totalPages, currentPage, title.c_str());
     return std::string(rebuilt);
 }
 
-/* Applies the Arabic title rewrite to the returned title buffer. */
 static void ApplyArabicLoadingTipsTitleFix(uint64_t titleBuffer)
 {
     if (!titleBuffer)
@@ -128,21 +162,48 @@ static void ApplyArabicLoadingTipsTitleFix(uint64_t titleBuffer)
     char* titleBuf = reinterpret_cast<char*>(titleBuffer);
 
     std::string before;
-    if (!SafeReadCString(titleBuf, 100, before))
+    if (!SafeReadCString(titleBuf, kGameTitleBufferSize, before))
         return;
 
     const std::string after = RewriteLoadingTipsTitleArabic(before);
     if (after == before)
         return;
 
-    if (!SafeWriteCString(titleBuf, 100, after.c_str()))
-        return;
-
-    Log("[LoadingTipsEv::GetTitleText] before: %s\n", before.c_str());
-    Log("[LoadingTipsEv::GetTitleText] after : %s\n", after.c_str());
+    SafeWriteCString(titleBuf, kGameTitleBufferSize, after.c_str());
 }
 
-/* Hook for LoadingTipsEv::GetTitleText(this, mode, param3, param4). */
+static uint64_t BuildFullArabicTitle(uint64_t thisPtr, uint8_t index, uint64_t gameResult)
+{
+    const char* title = nullptr;
+    int page = 0;
+    int pageCount = 0;
+    if (!QueryTipTitle(thisPtr, index, title, page, pageCount))
+        return 0;
+
+    std::string text;
+    if (!SafeReadCString(title, sizeof(gFullTitle) - 32, text))
+        return 0;
+
+    if (pageCount > 1)
+    {
+        char paged[sizeof(gFullTitle)] = {};
+        _snprintf_s(paged, sizeof(paged), _TRUNCATE, "(%d/%d) %s", pageCount, page, text.c_str());
+        text = paged;
+    }
+
+    std::string current;
+    SafeReadCString(reinterpret_cast<const char*>(gameResult), kGameTitleBufferSize, current);
+    if (text == current)
+        return gameResult;
+
+    _snprintf_s(gFullTitle, sizeof(gFullTitle), _TRUNCATE, "%s", text.c_str());
+    if (text.size() >= kGameTitleBufferSize)
+        Log("[LoadingTipsEv::GetTitleText] full title served (%zu bytes)\n", text.size());
+    return reinterpret_cast<uint64_t>(gFullTitle);
+}
+
+void PrepareArabicLoadingTipBody(void* loadingTipsEv);
+
 static uint64_t __fastcall hkLoadingTipsEv_GetTitleText(
     uint64_t thisPtr,
     char mode,
@@ -154,17 +215,25 @@ static uint64_t __fastcall hkLoadingTipsEv_GetTitleText(
 
     const uint64_t result = gOrigGetTitleText(thisPtr, mode, param3, param4);
 
+    if (!IsArabicSafe())
+        return result;
+
+    PrepareArabicLoadingTipBody(reinterpret_cast<void*>(thisPtr));
+
     if (!result)
         return result;
 
-    if (!IsArabicSafe())
-        return result;
+    if (mode == kTitleMode)
+    {
+        const uint64_t full = BuildFullArabicTitle(thisPtr, param4, result);
+        if (full)
+            return full;
+    }
 
     ApplyArabicLoadingTipsTitleFix(result);
     return result;
 }
 
-/* Installs the LoadingTipsEv::GetTitleText Arabic hook. */
 bool InstallLoadingTipsEvGetTitleTextArabicHook(HMODULE hGame)
 {
     UNREFERENCED_PARAMETER(hGame);
@@ -175,7 +244,8 @@ bool InstallLoadingTipsEvGetTitleTextArabicHook(HMODULE hGame)
         return false;
     }
 
-    gIsArabLanguage = reinterpret_cast<IsArabLanguage_t>(gAddr.IsArabLanguage);
+    gIsArabLanguage = &RL_IsRightToLeft;
+    gGetLangText = reinterpret_cast<GetLangText_t>(gAddr.GetLangText);
     gTarget = reinterpret_cast<void*>(gAddr.LoadingTipsEv_GetTitleText);
     if (!gTarget)
         return false;
@@ -199,7 +269,6 @@ bool InstallLoadingTipsEvGetTitleTextArabicHook(HMODULE hGame)
     return true;
 }
 
-/* Removes the LoadingTipsEv::GetTitleText Arabic hook. */
 void RemoveLoadingTipsEvGetTitleTextArabicHook()
 {
     if (gTarget)
@@ -211,6 +280,7 @@ void RemoveLoadingTipsEvGetTitleTextArabicHook()
 
     gOrigGetTitleText = nullptr;
     gIsArabLanguage = nullptr;
+    gGetLangText = nullptr;
 
     Log("[LoadingTipsEv::GetTitleText] Arabic hook removed.\n");
 }

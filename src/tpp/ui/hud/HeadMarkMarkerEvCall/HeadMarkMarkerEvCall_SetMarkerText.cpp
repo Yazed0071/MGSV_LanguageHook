@@ -11,6 +11,7 @@
 #include "MinHook.h"
 #include "log.h"
 #include "AddressSet.h"
+#include "LanguageProfile.h"
 
 typedef bool(__cdecl* IsArabLanguage_t)();
 static IsArabLanguage_t IsArabLanguage = nullptr;
@@ -152,6 +153,19 @@ static bool SafeReadU8(const void* addr, uint8_t& out)
     }
 }
 
+static bool SafeReadF32(const void* addr, float& out)
+{
+    __try
+    {
+        out = *reinterpret_cast<const float*>(addr);
+        return true;
+    }
+    __except (EXCEPTION_EXECUTE_HANDLER)
+    {
+        return false;
+    }
+}
+
 static bool SafeWriteCString(char* dst, size_t dstSize, const char* src)
 {
     __try
@@ -165,7 +179,15 @@ static bool SafeWriteCString(char* dst, size_t dstSize, const char* src)
             return true;
         }
 
-        std::snprintf(dst, dstSize, "%s", src);
+        size_t length = std::strlen(src);
+        if (length >= dstSize)
+        {
+            length = dstSize - 1;
+            while (length > 0 && (static_cast<unsigned char>(src[length]) & 0xC0) == 0x80)
+                --length;
+        }
+        std::memcpy(dst, src, length);
+        dst[length] = '\0';
         return true;
     }
     __except (EXCEPTION_EXECUTE_HANDLER)
@@ -188,12 +210,12 @@ static std::string BuildFullMarkerText(void* markerObj)
     uint8_t c7 = 0;
     uint8_t c8 = 0;
     uint8_t c9 = 0;
-    uint8_t dist = 0;
+    float dist = 0.0f;
 
     if (!SafeReadU8(base + 0xC7, c7)) return std::string();
     if (!SafeReadU8(base + 0xC8, c8)) return std::string();
     if (!SafeReadU8(base + 0xC9, c9)) return std::string();
-    if (!SafeReadU8(base + 0xE0, dist)) return std::string();
+    if (!SafeReadF32(base + 0xD8, dist)) return std::string();
 
     if (c9)
     {
@@ -214,7 +236,8 @@ static std::string BuildFullMarkerText(void* markerObj)
     }
 
     char buf[0x36] = {};
-    std::snprintf(buf, sizeof(buf), "%u%s", static_cast<unsigned>(dist), "\xD9\x85"); // "\xD9\x85" = "م"
+    const char* unit = RL_LangText(LanguageProfileKeys::UnitMeter);
+    std::snprintf(buf, sizeof(buf), "%s%d", unit ? unit : "m", static_cast<int>(dist));
     return std::string(buf);
 }
 
@@ -292,7 +315,7 @@ bool InstallHeadMarkMarkerEvCallSetMarkerTextArabicHook(HMODULE hGame)
     if (!hGame)
         return false;
 
-    IsArabLanguage = reinterpret_cast<IsArabLanguage_t>(ToRuntimeVA(hGame, gAddr.IsArabLanguage));
+    IsArabLanguage = &RL_IsRightToLeft;
     gGetLangText = reinterpret_cast<GetLangText_t>(ToRuntimeVA(hGame, gAddr.GetLangText));
     gSetTextForModelNodeText =
         reinterpret_cast<SetTextForModelNodeText_t>(ToRuntimeVA(hGame, gAddr.SetTextForModelNodeText));

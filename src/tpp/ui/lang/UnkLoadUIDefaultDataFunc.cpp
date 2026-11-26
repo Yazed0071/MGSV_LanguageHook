@@ -4,6 +4,9 @@
 #include "MinHook.h"
 #include <log.h>
 #include <AddressSet.h>
+#include "LanguageProfile.h"
+
+bool FoxPackExists(uint64_t fpkCode, bool withTextures);
 // ----------------------------------------
 // Opaque engine structs (enough for our use)
 // ----------------------------------------
@@ -68,16 +71,16 @@ static UnkLoadUIDefaultDataFunc_t g_Orig = nullptr;
 
 static void __fastcall hkUnkLoadUIDefaultDataFunc(void* param_1, void* param_2, void* param_3)
 {
-    const bool isArabic = (IsArabLanguage && IsArabLanguage());
+    const bool isRtl = (IsArabLanguage && IsArabLanguage()) && FoxPackExists(0x522A669AD20FC10Eull, true);
 
-    const char* path = "/Assets/tpp/pack/ui/ui_default_data2_ar.fpk";
-    if (!isArabic)
+    const char* path = "/Assets/tpp/pack/ui/ui_default_data2_rtl.fpk";
+    if (!isRtl)
     {
         Log("[UnkLoadUIDefaultDataFunc] Loading /Assets/tpp/pack/ui/ui_default_data2.fpk\n");
         path = "/Assets/tpp/pack/ui/ui_default_data2.fpk";
     }
     else
-        Log("[UnkLoadUIDefaultDataFunc] Loading /Assets/tpp/pack/ui/ui_default_data2_ar.fpk\n");
+        Log("[UnkLoadUIDefaultDataFunc] Loading /Assets/tpp/pack/ui/ui_default_data2_rtl.fpk\n");
 
     FoxString s{};
     FoxStringCtor(&s, path);
@@ -106,7 +109,7 @@ bool Install_UnkLoadUIDefaultDataFunc_Hook()
     if (!base)
         return false;
 
-    IsArabLanguage = reinterpret_cast<IsArabLanguage_t>(base + ToRva(gAddr.IsArabLanguage));
+    IsArabLanguage = &RL_IsRightToLeft;
     FoxStringCtor = reinterpret_cast<FoxStringCtor_t>(base + ToRva(gAddr.FoxStringCtor));
     StdFree = reinterpret_cast<StdFree_t>(base + ToRva(gAddr.StdFree));
     PathCInitWithString = reinterpret_cast<PathCInitWithString_t>(base + ToRva(gAddr.PathCInitWithString));

@@ -10,6 +10,8 @@
 #include "log.h"
 #include <AddressSet.h>
 
+void NoteLanguageApplied();
+
 // ------------------------------------------------------------
 // Address constants
 // ------------------------------------------------------------
@@ -21,11 +23,10 @@ static constexpr uint64_t HASH_TRANSLATE_X = 0x1352A707068Bull;
 static constexpr uint64_t HASH_TRANSLATE_Y = 0x227F987BF357ull;
 
 // Popup constants.
-static constexpr int      kPhysicalRowCount = 9;
+static constexpr int      kPhysicalRowCount = 11;
+static constexpr int      kGameRowCount = 9;
+static int               gRowCapacity = kGameRowCount;
 static constexpr uint32_t kInvalidLangId = 0xFFFFFFFFu;
-
-// Optional one-shot popup-hook removal after a real language commit.
-static constexpr bool kRemovePopupHooksAfterRealSelection = true;
 
 // Rescue timeout after the first null fix.
 static constexpr DWORD kApplyRescueKeepAliveMs = 10000;
@@ -55,7 +56,7 @@ using DecideLangList_t = void(__fastcall*)(void* thisPtr);
 
 using UpdateLangPopup_t = void(__fastcall*)(void* thisPtr);
 
-using ChangeLanguage_t = void(__fastcall*)(uint32_t langId);
+using ChangeLanguage_t = int(__fastcall*)(void* luaState);
 
 using ApplyFormVariation_t = bool(__fastcall*)(
     void* thisPtr,
@@ -101,7 +102,6 @@ static void* gTargetChangeLanguage = nullptr;
 static void* gTargetApplyFormVariation = nullptr;
 
 static thread_local bool gInOriginalSetSelectLangList = false;
-static bool gPopupHooksRemovedAfterSelection = false;
 
 static std::unordered_map<void*, uint32_t> gCurrentPageByPopup;
 
@@ -263,8 +263,82 @@ static void* GetUiObject(void* thisPtr)
     return *reinterpret_cast<void**>(reinterpret_cast<uint8_t*>(owner) + 0x20);
 }
 
+static constexpr uint64_t kExtraRowLayouts[kPhysicalRowCount - kGameRowCount] = { 0x1EF9722A339Full,
+                                                                                  0x35CBD98FD133ull };
+static constexpr uint64_t kRowModelName = 0xB1B9556CD4A8ull;
+static constexpr uint64_t kRowNormalAnim = 0x731EE2FA4A29ull;
+static constexpr uint64_t kRowSelectAnim = 0xEB70DFE9D335ull;
+static constexpr uint64_t kRowEntryAnim = 0x98AB22DA0790ull;
+static constexpr uint64_t kRowNameNode = 0x44DED9C6E075ull;
+static constexpr size_t kPopupLayoutRoot = 0x50;
+
+struct ExtraRows
+{
+    std::array<PopupRowRef, kPhysicalRowCount - kGameRowCount> rows{};
+    bool ready = false;
+};
+
+static std::unordered_map<void*, ExtraRows> gExtraRows;
+
+template <typename T>
+static T GetVFunc(void* obj, size_t byteOffset);
+
+static uint64_t UiLookup(void* uiObj, size_t slot, uint64_t parent, uint64_t name)
+{
+    using Fn = uint64_t(__fastcall*)(void*, uint64_t, uint64_t);
+    Fn fn = GetVFunc<Fn>(uiObj, slot);
+    return fn ? fn(uiObj, parent, name) : 0;
+}
+
+static bool ResolveExtraRows(void* thisPtr, void* uiObj)
+{
+    ExtraRows& extra = gExtraRows[thisPtr];
+    const bool wasReady = extra.ready;
+    extra.ready = false;
+    const uint64_t root = *reinterpret_cast<uint64_t*>(reinterpret_cast<uint8_t*>(thisPtr) + kPopupLayoutRoot);
+    if (!uiObj || !root)
+        return false;
+    std::array<PopupRowRef, kPhysicalRowCount - kGameRowCount> found{};
+    for (size_t i = 0; i < found.size(); ++i)
+    {
+        const uint64_t layout = UiLookup(uiObj, 0x220, root, kExtraRowLayouts[i]);
+        if (!layout)
+        {
+            Log("[LangSelectPopup] extra row %zu not in the layout file - the list keeps 9 rows and pages.\n", i + 10);
+            return false;
+        }
+        PopupRowRef& row = found[i];
+        row.enableHandle = UiLookup(uiObj, 0x248, layout, kRowModelName);
+        row.normalHandle = UiLookup(uiObj, 0x258, layout, kRowNormalAnim);
+        row.selectHandle = UiLookup(uiObj, 0x258, layout, kRowSelectAnim);
+        row.entryHandle = UiLookup(uiObj, 0x258, layout, kRowEntryAnim);
+        row.layoutHandle = row.enableHandle ? UiLookup(uiObj, 0x290, row.enableHandle, kRowNameNode) : 0;
+        if (!row.enableHandle || !row.normalHandle || !row.selectHandle || !row.entryHandle || !row.layoutHandle)
+        {
+            Log("[LangSelectPopup] extra row %zu is incomplete - the list keeps 9 rows and pages.\n", i + 10);
+            return false;
+        }
+        using PlayFn = void(__fastcall*)(void*, uint64_t, int);
+        if (PlayFn play = GetVFunc<PlayFn>(uiObj, 0x680))
+            play(uiObj, row.selectHandle, 1);
+    }
+    extra.rows = found;
+    extra.ready = true;
+    if (!wasReady)
+        Log("[LangSelectPopup] all %d languages fit on one screen (rows 10-11 found in the layout file).\n",
+            kPhysicalRowCount);
+    return true;
+}
+
 static PopupRowRef GetPopupRowRef(void* thisPtr, int rowIndex)
 {
+    if (rowIndex >= kGameRowCount)
+    {
+        const auto it = gExtraRows.find(thisPtr);
+        if (it == gExtraRows.end() || !it->second.ready || rowIndex >= kPhysicalRowCount)
+            return PopupRowRef{};
+        return it->second.rows[rowIndex - kGameRowCount];
+    }
     auto* rowBase = reinterpret_cast<uint8_t*>(thisPtr) + 0xC0 + (rowIndex * 0x30);
 
     PopupRowRef row{};
@@ -376,7 +450,7 @@ static std::vector<uint32_t> BuildPageStarts(uint32_t totalLangs)
 
     starts.push_back(0);
 
-    if (totalLangs <= 8)
+    if (totalLangs <= 8 || totalLangs <= static_cast<uint32_t>(gRowCapacity))
         return starts;
 
     uint32_t start = 8;
@@ -479,7 +553,7 @@ static PopupPage BuildPage(uint32_t pageIndex, const std::vector<uint32_t>& pool
 
     auto pushLanguage = [&](uint32_t langId)
         {
-            if (page.visibleCount >= static_cast<uint32_t>(kPhysicalRowCount))
+            if (page.visibleCount >= static_cast<uint32_t>(gRowCapacity))
                 return;
 
             page.slots[page.visibleCount].kind = PageItemKind::Language;
@@ -489,7 +563,7 @@ static PopupPage BuildPage(uint32_t pageIndex, const std::vector<uint32_t>& pool
 
     auto pushControl = [&](PageItemKind kind)
         {
-            if (page.visibleCount >= static_cast<uint32_t>(kPhysicalRowCount))
+            if (page.visibleCount >= static_cast<uint32_t>(gRowCapacity))
                 return;
 
             page.slots[page.visibleCount].kind = kind;
@@ -499,7 +573,7 @@ static PopupPage BuildPage(uint32_t pageIndex, const std::vector<uint32_t>& pool
 
     if (!hasPrev)
     {
-        const uint32_t langCount = hasNext ? 8u : ((remain < 9u) ? remain : 9u);
+        const uint32_t langCount = hasNext ? 8u : ((remain < static_cast<uint32_t>(gRowCapacity)) ? remain : static_cast<uint32_t>(gRowCapacity));
 
         for (uint32_t i = 0; i < langCount && (start + i) < total; ++i)
             pushLanguage(pool[start + i]);
@@ -819,12 +893,6 @@ static bool HandleFakeScrollConfirm(void* thisPtr)
     return true;
 }
 
-static bool IsRealConfiguredLanguageId(uint32_t langId)
-{
-    const std::vector<uint32_t> pool = BuildLanguagePool();
-    return std::find(pool.begin(), pool.end(), langId) != pool.end();
-}
-
 static bool CreateAndEnableHook(void* target, void* detour, void** original, const char* name)
 {
     const MH_STATUS createSt = MH_CreateHook(target, detour, original);
@@ -1017,7 +1085,7 @@ static bool __fastcall hkApplyFormVariation(
     {
         gLastGoodApplyFormVariationThis = thisPtr;
 
-        Log("[ApplyRescue_FAKE_SCROLL] normal this=%p model=%p cp=%p pbd=%p rm=%p count=%u reset=%u resetObjs=%u session=%u timerStarted=%u token=%llu\n",
+        LogDetail("[ApplyRescue_FAKE_SCROLL] normal this=%p model=%p cp=%p pbd=%p rm=%p count=%u reset=%u resetObjs=%u session=%u timerStarted=%u token=%llu\n",
             thisPtr,
             model,
             connectPointFile,
@@ -1056,14 +1124,15 @@ static bool __fastcall hkApplyFormVariation(
         static_cast<unsigned>(gApplyRescueTimerStarted.load()),
         static_cast<unsigned long long>(gApplyRescueSessionToken.load()));
 
-    if (gLastGoodApplyFormVariationThis != nullptr)
+    void* const cachedThis = gLastGoodApplyFormVariationThis;
+    if (cachedThis != nullptr)
     {
         StartApplyRescueTimeoutThread();
 
-        Log("[ApplyRescue_FAKE_SCROLL] Forcing cached this=%p\n", gLastGoodApplyFormVariationThis);
+        Log("[ApplyRescue_FAKE_SCROLL] Forcing cached this=%p\n", cachedThis);
 
         return oApplyFormVariation(
-            gLastGoodApplyFormVariationThis,
+            cachedThis,
             model,
             connectPointFile,
             partsBuildDirector,
@@ -1079,47 +1148,6 @@ static bool __fastcall hkApplyFormVariation(
     return false;
 }
 
-static void RemovePopupOnlyHooks()
-{
-    if (gTargetSetSelectLangList)
-    {
-        MH_DisableHook(gTargetSetSelectLangList);
-        MH_RemoveHook(gTargetSetSelectLangList);
-        gTargetSetSelectLangList = nullptr;
-    }
-
-    if (gTargetUpdateLangList)
-    {
-        MH_DisableHook(gTargetUpdateLangList);
-        MH_RemoveHook(gTargetUpdateLangList);
-        gTargetUpdateLangList = nullptr;
-    }
-
-    if (gTargetDecideLangList)
-    {
-        MH_DisableHook(gTargetDecideLangList);
-        MH_RemoveHook(gTargetDecideLangList);
-        gTargetDecideLangList = nullptr;
-    }
-
-    if (gTargetUpdateLangPopup)
-    {
-        MH_DisableHook(gTargetUpdateLangPopup);
-        MH_RemoveHook(gTargetUpdateLangPopup);
-        gTargetUpdateLangPopup = nullptr;
-    }
-
-    oSetSelectLangList = nullptr;
-    oUpdateLangList = nullptr;
-    oDecideLangList = nullptr;
-    oUpdateLangPopup = nullptr;
-
-    gCurrentPageByPopup.clear();
-    gInOriginalSetSelectLangList = false;
-
-    Log("[LangSelectPopup] Popup-only hooks removed after real language selection.\n");
-}
-
 static void __fastcall hkSetSelectLangList(void* thisPtr)
 {
     if (!oSetSelectLangList)
@@ -1129,7 +1157,17 @@ static void __fastcall hkSetSelectLangList(void* thisPtr)
     oSetSelectLangList(thisPtr);
     gInOriginalSetSelectLangList = false;
 
-    if (!IsFakeScrollFullMode(thisPtr))
+    void* uiObj = GetUiObject(thisPtr);
+    const bool extraRows = ResolveExtraRows(thisPtr, uiObj);
+    const bool fullMode = IsFakeScrollFullMode(thisPtr);
+    gRowCapacity = (extraRows && fullMode) ? kPhysicalRowCount : kGameRowCount;
+    if (extraRows && !fullMode)
+    {
+        for (int i = kGameRowCount; i < kPhysicalRowCount; ++i)
+            UiCall_2B0_SetRowVisible(uiObj, GetPopupRowRef(thisPtr, i).enableHandle, 0);
+    }
+
+    if (!fullMode)
         return;
 
     if (!EnableApplyFormVariationRescueHook())
@@ -1178,6 +1216,8 @@ static void __fastcall hkDecideLangList(void* thisPtr)
     if (!oDecideLangList)
         return;
 
+    NoteLanguageApplied();
+
     if (HandleFakeScrollConfirm(thisPtr))
         return;
 
@@ -1195,20 +1235,13 @@ static void __fastcall hkUpdateLangPopup(void* thisPtr)
         ApplyCurrentPageSelectionVisuals(thisPtr);
 }
 
-static void __fastcall hkChangeLanguage(uint32_t langId)
+static int __fastcall hkChangeLanguage(void* luaState)
 {
-    Log("[ChangeLanguage] langId=%u\n", langId);
-
-    if (kRemovePopupHooksAfterRealSelection &&
-        !gPopupHooksRemovedAfterSelection &&
-        IsRealConfiguredLanguageId(langId))
-    {
-        gPopupHooksRemovedAfterSelection = true;
-        RemovePopupOnlyHooks();
-    }
-
-    if (oChangeLanguage)
-        oChangeLanguage(langId);
+    Log("[ChangeLanguage] called\n");
+    FlushLog();
+    const int result = oChangeLanguage ? oChangeLanguage(luaState) : 0;
+    NoteLanguageApplied();
+    return result;
 }
 
 
@@ -1276,7 +1309,6 @@ bool InstallLangSelectPopupPagedRewriteHooks(HMODULE hGame)
     }
 
     gCurrentPageByPopup.clear();
-    gPopupHooksRemovedAfterSelection = false;
     gInOriginalSetSelectLangList = false;
 
     Log("[LangSelectPopup] Fake-scroll rewrite hooks installed.\n");
@@ -1327,7 +1359,6 @@ void RemoveLangSelectPopupPagedRewriteHooks()
     oChangeLanguage = nullptr;
 
     gCurrentPageByPopup.clear();
-    gPopupHooksRemovedAfterSelection = false;
     gInOriginalSetSelectLangList = false;
 
     RemoveApplyFormVariationRescueHookCompletely();

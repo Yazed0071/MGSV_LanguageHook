@@ -4,6 +4,7 @@
 #include "MinHook.h"
 #include "log.h"
 #include "AddressSet.h"
+#include "LanguageProfile.h"
 
 using IsArabLanguage_t = bool(__cdecl*)();
 using SetDisplayText_t = void(__fastcall*)(void* thisPtr);
@@ -74,7 +75,7 @@ static void __fastcall hkSetDisplayText(void* thisPtr)
         if (!outBuf || !outBuf[0] || iVar2 <= 0)
             return;
 
-        const char* openParen = std::strchr(outBuf, '(');
+        const char* openParen = std::strrchr(outBuf, '(');
         if (!openParen)
             return;
 
@@ -90,7 +91,7 @@ static void __fastcall hkSetDisplayText(void* thisPtr)
         _snprintf_s(rebuilt, sizeof(rebuilt), _TRUNCATE, "(%d/%d) %s", iVar2, iVar1, title);
         SafeCopy(outBuf, 100, rebuilt);
 
-        Log("[DisplayTimerEvCall::SetDisplayText] Arabic rebuild applied: %s\n", outBuf);
+        LogDetail("[DisplayTimerEvCall::SetDisplayText] Arabic rebuild applied: %s\n", outBuf);
     }
     __except (EXCEPTION_EXECUTE_HANDLER)
     {
@@ -103,8 +104,7 @@ bool InstallDisplayTimerEvCallSetDisplayTextHook(HMODULE hGame)
     if (!hGame)
         return false;
 
-    gIsArabLanguage =
-        reinterpret_cast<IsArabLanguage_t>(ToRuntimeVA(hGame, gAddr.IsArabLanguage));
+    gIsArabLanguage = &RL_IsRightToLeft;
 
     gTargetSetDisplayText =
         reinterpret_cast<void*>(ToRuntimeVA(hGame, gAddr.SetDisplayText));

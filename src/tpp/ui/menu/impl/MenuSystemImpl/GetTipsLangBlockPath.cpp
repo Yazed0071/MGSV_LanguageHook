@@ -5,6 +5,8 @@
 #include "MinHook.h"
 #include "log.h"
 #include "AddressSet.h"
+
+bool FoxPackExists(uint64_t fpkCode, bool withTextures);
 // ------------------------------------------------------------
 // Arabic language checker
 // ------------------------------------------------------------
@@ -58,7 +60,7 @@ static uint64_t* __fastcall hkGetTipsLangBlockPath(void* thisPtr, uint64_t* outP
     if (!outPathId)
         return oGetTipsLangBlockPath ? oGetTipsLangBlockPath(thisPtr, outPathId) : nullptr;
 
-    if (IsArabicSafe())
+    if (IsArabicSafe() && FoxPackExists(ARABIC_TIPS_LANG_BLOCK_PATH_ID, false))
     {
         *outPathId = ARABIC_TIPS_LANG_BLOCK_PATH_ID;
         Log("[GetTipsLangBlockPath] Arabic detected, forcing PathId: 0x%llX\n",

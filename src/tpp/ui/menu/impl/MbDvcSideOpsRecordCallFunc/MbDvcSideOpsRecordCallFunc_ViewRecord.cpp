@@ -7,6 +7,7 @@
 #include "MinHook.h"
 #include "log.h"
 #include "AddressSet.h"
+#include "LanguageProfile.h"
 
 namespace
 {
@@ -308,8 +309,8 @@ static void ApplyArabicSideOpsTitleFix(void* thisPtr)
         return;
     }
 
-    Log("[MbDvcSideOpsRecordCallFunc::ViewRecord] before: %s\n", before.c_str());
-    Log("[MbDvcSideOpsRecordCallFunc::ViewRecord] after : %s\n", after.c_str());
+    LogDetail("[MbDvcSideOpsRecordCallFunc::ViewRecord] before: %s\n", before.c_str());
+    LogDetail("[MbDvcSideOpsRecordCallFunc::ViewRecord] after : %s\n", after.c_str());
 }
 
 /* Hook for MbDvcSideOpsRecordCallFunc::ViewRecord(this). */
@@ -338,7 +339,7 @@ bool InstallMbDvcSideOpsRecordCallFuncViewRecordArabicHook(HMODULE hGame)
         return false;
     }
 
-    gIsArabLanguage = reinterpret_cast<IsArabLanguage_t>(gAddr.IsArabLanguage);
+    gIsArabLanguage = &RL_IsRightToLeft;
     gTarget = reinterpret_cast<void*>(gAddr.MbDvcSideOpsRecordCallFuncViewRecord);
     if (!gTarget)
         return false;

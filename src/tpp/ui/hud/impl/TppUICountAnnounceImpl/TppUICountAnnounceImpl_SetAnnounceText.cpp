@@ -7,6 +7,7 @@
 #include "MinHook.h"
 #include "log.h"
 #include "AddressSet.h"
+#include "LanguageProfile.h"
 
 namespace
 {
@@ -168,12 +169,16 @@ static bool ReapplyCountAnnounceText(void* thisPtr)
     {
         auto* base = reinterpret_cast<uint8_t*>(thisPtr);
 
+        uint64_t owner = 0;
         uint64_t uiObj = 0;
         uint64_t nodeA = 0;
         uint64_t nodeB = 0;
         uint64_t textUnit = 0;
 
-        if (!SafeReadU64(base + 0x40, uiObj) || !uiObj)
+        if (!SafeReadU64(base + 0x40, owner) || !owner)
+            return false;
+
+        if (!SafeReadU64(reinterpret_cast<const uint8_t*>(owner) + 0x20, uiObj) || !uiObj)
             return false;
 
         if (!SafeReadU64(base + 0x60, nodeA) || !nodeA)
@@ -230,8 +235,8 @@ static void ApplyArabicCountAnnounceFix(void* thisPtr)
         return;
     }
 
-    Log("[TppUICountAnnounceImpl::SetAnnounceText] before: %s\n", before.c_str());
-    Log("[TppUICountAnnounceImpl::SetAnnounceText] after : %s\n", after.c_str());
+    LogDetail("[TppUICountAnnounceImpl::SetAnnounceText] before: %s\n", before.c_str());
+    LogDetail("[TppUICountAnnounceImpl::SetAnnounceText] after : %s\n", after.c_str());
 }
 
 /* Hook for TppUICountAnnounceImpl::SetAnnounceText(this, count). */
@@ -257,7 +262,7 @@ bool InstallTppUICountAnnounceImplSetAnnounceTextArabicHook(HMODULE hGame)
         return false;
     }
 
-    gIsArabLanguage = reinterpret_cast<IsArabLanguage_t>(gAddr.IsArabLanguage);
+    gIsArabLanguage = &RL_IsRightToLeft;
     gTarget = reinterpret_cast<void*>(gAddr.TppUICountAnnounceImpl_SetAnnounceText);
     if (!gTarget)
         return false;

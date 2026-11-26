@@ -21,6 +21,8 @@
 #include "log.h"
 #include <AddressSet.h>
 
+bool FoxPackExists(uint64_t fpkCode, bool withTextures);
+
 // ------------------------------------------------------------
 // Address constants
 // ------------------------------------------------------------
@@ -67,8 +69,8 @@ static_assert(sizeof(PathArrayState) == 16, "PathArrayState must be 16 bytes");
 
 // Function: original ui::lang::UnkLoadTppPartsLangFpk.
 // Params:
-// - none
-using UnkLoadTppPartsLangFpk_t = void(__fastcall*)();
+// - self: owner passed by the game
+using UnkLoadTppPartsLangFpk_t = void(__fastcall*)(void* self);
 
 // Function: current-language helper.
 // Params:
@@ -182,6 +184,17 @@ static void LoadArabicTppPartsLangFpk()
     if (!gGetUiUtility)
         return;
 
+    if (!FoxPackExists(HASH_LANG_TPP_PARTS_ARA_FPK, false))
+    {
+        static bool logged = false;
+        if (!logged)
+        {
+            logged = true;
+            Log("[UnkLoadTppPartsLangFpk] lang_tpp_parts_ara.fpk/.fpkd not found - vanilla parts names kept.\n");
+        }
+        return;
+    }
+
     void* uiUtility = nullptr;
 
     __try
@@ -225,13 +238,13 @@ static void LoadArabicTppPartsLangFpk()
 // Runs the original function first, then appends the missing Arabic
 // parts FPK when the current language is Arabic.
 // Params:
-// - none
+// - self: owner passed by the game
 // ------------------------------------------------------------
 
-static void __fastcall hkUnkLoadTppPartsLangFpk()
+static void __fastcall hkUnkLoadTppPartsLangFpk(void* self)
 {
     if (oUnkLoadTppPartsLangFpk)
-        oUnkLoadTppPartsLangFpk();
+        oUnkLoadTppPartsLangFpk(self);
 
     if (!IsArabicSafe())
         return;

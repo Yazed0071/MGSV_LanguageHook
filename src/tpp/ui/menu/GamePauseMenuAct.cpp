@@ -3,6 +3,7 @@
 #include "MinHook.h"
 #include "log.h"
 #include "AddressSet.h"
+#include "LanguageProfile.h"
 
 using IsArabLanguage_t = bool(__cdecl*)();
 using SetupMenuText_t = void(__fastcall*)(void* thisPtr);
@@ -182,8 +183,7 @@ bool InstallGamePauseMenuArabicTextHooks(HMODULE hGame)
     if (!hGame)
         return false;
 
-    gIsArabLanguage =
-        reinterpret_cast<IsArabLanguage_t>(ToRuntimeVA(hGame, gAddr.IsArabLanguage));
+    gIsArabLanguage = &RL_IsRightToLeft;
 
     gTargetSetupMenuText =
         reinterpret_cast<void*>(ToRuntimeVA(hGame, gAddr.SetupMenuText));

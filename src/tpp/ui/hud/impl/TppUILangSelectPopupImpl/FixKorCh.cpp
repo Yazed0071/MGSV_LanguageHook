@@ -15,6 +15,7 @@
 // - restores it on boot through the getter hook
 
 #include <Windows.h>
+#include <atomic>
 #include <cstdint>
 #include <cstdio>
 #include "MinHook.h"
@@ -98,26 +99,17 @@ static bool BuildIniPath(char* outPath, size_t outPathCount)
     if (!outPath || outPathCount == 0)
         return false;
 
-    HMODULE hSelf = nullptr;
-    if (!GetModuleHandleExA(
-        GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
-        reinterpret_cast<LPCSTR>(&BuildIniPath),
-        &hSelf))
-    {
-        return false;
-    }
-
-    char dllPath[MAX_PATH] = {};
-    if (!GetModuleFileNameA(hSelf, dllPath, MAX_PATH))
+    char gameDir[MAX_PATH] = {};
+    if (!GetModuleFileNameA(nullptr, gameDir, MAX_PATH))
         return false;
 
-    char* slash = strrchr(dllPath, '\\');
+    char* slash = strrchr(gameDir, '\\');
     if (!slash)
         return false;
 
     *(slash + 1) = '\0';
 
-    const int wrote = snprintf(outPath, outPathCount, "%s%s", dllPath, "MGSV_ExtendedLanguage.ini");
+    const int wrote = snprintf(outPath, outPathCount, "%s%s", gameDir, "MGSV_ExtendedLanguage.ini");
     return (wrote > 0 && static_cast<size_t>(wrote) < outPathCount);
 }
 
@@ -298,6 +290,7 @@ static void UpdatePersistence(uint32_t langId)
         Log("[GameLangState] Persisted langId=%u\n", langId);
     else
         Log("[GameLangState] Failed to persist langId=%u\n", langId);
+    FlushLog();
 }
 
 // ------------------------------------------------------------
@@ -337,8 +330,25 @@ static uint32_t __fastcall hkGetGameLanguageState(void* thisPtr)
 // - none
 // ------------------------------------------------------------
 
+static std::atomic<bool> gLanguageApplied{ false };
+static std::atomic<bool> gFirstSetSeen{ false };
+
+void NoteLanguageApplied()
+{
+    gLanguageApplied.store(true);
+}
+
 static void __fastcall hkSetGameLanguageState(void* thisPtr, uint32_t langId)
 {
+    EnsurePersistLoaded();
+    const bool firstSet = !gFirstSetSeen.exchange(true);
+    if (firstSet && !gLanguageApplied.load() && gPersistLoaded && IsValidExtendedLang(gPersistedLang) &&
+        langId != gPersistedLang)
+    {
+        Log("[GameLangState::Set] start-up default langId=%u replaced by the saved langId=%u\n", langId, gPersistedLang);
+        langId = gPersistedLang;
+    }
+
     UpdatePersistence(langId);
 
     // For stock ids, let the original do its normal work.

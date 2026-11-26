@@ -4,6 +4,7 @@
 #include <cstring>
 #include "log.h"
 #include "AddressSet.h"
+#include "LanguageProfile.h"
 
 namespace
 {
@@ -161,8 +162,7 @@ bool InstallSetTextMissionTelopNameArabicEpisodeFormatHook(HMODULE hGame)
 
     gGameBase = reinterpret_cast<uintptr_t>(hGame);
 
-    gIsArabLanguage =
-        reinterpret_cast<IsArabLanguage_t>(ToRuntimeVA(hGame, gAddr.IsArabLanguage));
+    gIsArabLanguage = &RL_IsRightToLeft;
 
     gCallSite =
         ToRuntimeVA(hGame, gAddr.SetTextMissionTelopNameEpisodeSnprintfCall);

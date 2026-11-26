@@ -5,6 +5,7 @@
 #include "MinHook.h"
 #include "log.h"
 #include "AddressSet.h"
+#include "LanguageProfile.h"
 
 namespace
 {
@@ -119,8 +120,7 @@ bool InstallTitleLayoutControllerSetTextArabicHook(HMODULE hGame)
     if (!hGame)
         return false;
 
-    gIsArabLanguage =
-        reinterpret_cast<IsArabLanguage_t>(ToRuntimeVA(hGame, gAddr.IsArabLanguage));
+    gIsArabLanguage = &RL_IsRightToLeft;
 
     gTargettpp_ui_menu_TitleLayoutController_SetText =
         reinterpret_cast<void*>(ToRuntimeVA(hGame, ABS_tpp_ui_menu_TitleLayoutController_SetText));

@@ -1,164 +1,153 @@
 #include "pch.h"
 #include <Windows.h>
+#include <atomic>
 #include <cstdint>
 #include <cstring>
 #include <string>
 #include "MinHook.h"
 #include "log.h"
 #include "AddressSet.h"
+#include "LanguageProfile.h"
 
 namespace
 {
     using IsArabLanguage_t = bool(__cdecl*)();
-
-    using EquipDetailsCallbackImpl_CreateBulletDifferenceText_t =
+    using CreateBulletDifferenceText_t =
         void(__fastcall*)(void* thisPtr, char* outText, uint16_t valueA, uint16_t valueB, uint16_t baseA, uint16_t baseB);
 
-    static IsArabLanguage_t gIsArabLanguage = nullptr;
-    static EquipDetailsCallbackImpl_CreateBulletDifferenceText_t gOrigCreateBulletDifferenceText = nullptr;
-    static void* gTarget = nullptr;
-}
+    constexpr size_t OUT_TEXT_SIZE = 0x80;
+    constexpr int LOG_BUDGET = 3;
 
-/* Checks Arabic state safely. */
-static bool IsArabicSafe()
-{
-    if (!gIsArabLanguage)
-        return false;
+    IsArabLanguage_t gIsArabLanguage = nullptr;
+    CreateBulletDifferenceText_t gOrigCreateBulletDifferenceText = nullptr;
+    void* gTarget = nullptr;
+    std::atomic<int> gLogBudget{ LOG_BUDGET };
 
-    __try
+    bool IsArabicSafe()
     {
-        return gIsArabLanguage();
-    }
-    __except (EXCEPTION_EXECUTE_HANDLER)
-    {
-        return false;
-    }
-}
-
-/* Reads a bounded c-string safely. */
-static bool SafeReadCString(const char* src, size_t maxLen, std::string& out)
-{
-    __try
-    {
-        if (!src || maxLen == 0)
+        if (!gIsArabLanguage)
+            return false;
+        __try
         {
-            out.clear();
+            return gIsArabLanguage();
+        }
+        __except (EXCEPTION_EXECUTE_HANDLER)
+        {
             return false;
         }
+    }
 
-        size_t len = 0;
-        while (len < maxLen && src[len] != '\0')
-            ++len;
-
-        out.assign(src, len);
+    bool SplitNumberPair(const std::string& s, std::string& first, std::string& second)
+    {
+        const size_t slash = s.find('/');
+        if (slash == std::string::npos || slash == 0 || slash + 1 >= s.size() || s.find('/', slash + 1) != std::string::npos)
+            return false;
+        for (size_t i = 0; i < s.size(); ++i)
+        {
+            if (i != slash && (s[i] < '0' || s[i] > '9'))
+                return false;
+        }
+        first = s.substr(0, slash);
+        second = s.substr(slash + 1);
         return true;
     }
-    __except (EXCEPTION_EXECUTE_HANDLER)
-    {
-        out.clear();
-        return false;
-    }
-}
 
-/* Writes a bounded c-string safely. */
-static bool SafeWriteCString(char* dst, size_t dstSize, const char* src)
-{
-    __try
+    size_t SlashOutsideTags(const std::string& s)
     {
-        if (!dst || dstSize == 0)
-            return false;
-
-        if (!src)
+        size_t found = std::string::npos;
+        int depth = 0;
+        for (size_t i = 0; i < s.size(); ++i)
         {
-            dst[0] = '\0';
+            if (s[i] == '<')
+                ++depth;
+            else if (s[i] == '>' && depth > 0)
+                --depth;
+            else if (s[i] == '/' && depth == 0)
+            {
+                if (found != std::string::npos)
+                    return std::string::npos;
+                found = i;
+            }
+        }
+        return found;
+    }
+
+    bool LimitFirstBulletText(const std::string& in, std::string& out)
+    {
+        std::string magazine, reserve;
+        const size_t open = in.find('(');
+        if (open == std::string::npos)
+        {
+            if (!SplitNumberPair(in, magazine, reserve))
+                return false;
+            out = reserve + "/" + magazine;
             return true;
         }
-
-        _snprintf_s(dst, dstSize, _TRUNCATE, "%s", src);
+        if (in.back() != ')' || !SplitNumberPair(in.substr(0, open), magazine, reserve))
+            return false;
+        const std::string inner = in.substr(open + 1, in.size() - open - 2);
+        const size_t slash = SlashOutsideTags(inner);
+        if (slash == std::string::npos)
+            return false;
+        out = reserve + "/" + magazine + "(" + inner.substr(slash + 1) + "/" + inner.substr(0, slash) + ")";
         return true;
     }
-    __except (EXCEPTION_EXECUTE_HANDLER)
+
+    size_t ReadOutText(const char* src, char* dst, size_t size)
     {
-        return false;
-    }
-}
-
-/* Rewrites "30/120(<...>/<...>)" into "(<...>/<...>) 30/120". */
-static std::string RewriteBulletDifferenceTextArabic(const std::string& src)
-{
-    if (src.empty())
-        return src;
-
-    const size_t openPos = src.find('(');
-    if (openPos == std::string::npos)
-        return src;
-
-    if (src.back() != ')')
-        return src;
-
-    const std::string valuePart = src.substr(0, openPos);
-    const std::string diffPart = src.substr(openPos);
-
-    if (valuePart.empty() || diffPart.size() < 2)
-        return src;
-
-    bool hasSlash = false;
-    for (char c : valuePart)
-    {
-        if (c == '/')
+        __try
         {
-            hasSlash = true;
-            continue;
+            const size_t length = strnlen(src, size);
+            if (length == 0 || length >= size)
+                return 0;
+            std::memcpy(dst, src, length + 1);
+            return length;
         }
-
-        if (c < '0' || c > '9')
-            return src;
+        __except (EXCEPTION_EXECUTE_HANDLER)
+        {
+            return 0;
+        }
     }
 
-    if (!hasSlash)
-        return src;
+    bool WriteOutText(char* dst, const char* src, size_t length)
+    {
+        __try
+        {
+            std::memcpy(dst, src, length + 1);
+            return true;
+        }
+        __except (EXCEPTION_EXECUTE_HANDLER)
+        {
+            return false;
+        }
+    }
 
-    return diffPart + " " + valuePart;
+    void ApplyLimitFirst(char* outText)
+    {
+        char local[OUT_TEXT_SIZE] = {};
+        const size_t length = ReadOutText(outText, local, sizeof(local));
+        if (length == 0)
+            return;
+        const std::string before(local, length);
+        std::string after;
+        if (!LimitFirstBulletText(before, after) || after.size() != length || after == before)
+            return;
+        if (!WriteOutText(outText, after.c_str(), length))
+            return;
+        if (gLogBudget.load() > 0 && gLogBudget.fetch_sub(1) > 0)
+            Log("[EquipDetailsCallbackImpl::CreateBulletDifferenceText] [%s] shown as [%s].\n", before.c_str(), after.c_str());
+    }
+
+    void __fastcall hkEquipDetailsCallbackImpl_CreateBulletDifferenceText(void* thisPtr, char* outText, uint16_t valueA,
+                                                                          uint16_t valueB, uint16_t baseA, uint16_t baseB)
+    {
+        if (gOrigCreateBulletDifferenceText)
+            gOrigCreateBulletDifferenceText(thisPtr, outText, valueA, valueB, baseA, baseB);
+        if (outText && IsArabicSafe())
+            ApplyLimitFirst(outText);
+    }
 }
 
-/* Applies the Arabic reorder to the already-built output buffer. */
-static void ApplyArabicBulletDifferenceFix(char* outText)
-{
-    if (!outText)
-        return;
-
-    std::string before;
-    if (!SafeReadCString(outText, 0x80, before))
-        return;
-
-    const std::string after = RewriteBulletDifferenceTextArabic(before);
-    if (after == before)
-        return;
-
-    if (!SafeWriteCString(outText, 0x80, after.c_str()))
-        return;
-
-}
-
-/* Hook for CreateBulletDifferenceText(this, outText, valueA, valueB, baseA, baseB). */
-static void __fastcall hkEquipDetailsCallbackImpl_CreateBulletDifferenceText(
-    void* thisPtr,
-    char* outText,
-    uint16_t valueA,
-    uint16_t valueB,
-    uint16_t baseA,
-    uint16_t baseB)
-{
-    if (gOrigCreateBulletDifferenceText)
-        gOrigCreateBulletDifferenceText(thisPtr, outText, valueA, valueB, baseA, baseB);
-
-    if (!IsArabicSafe())
-        return;
-
-    ApplyArabicBulletDifferenceFix(outText);
-}
-
-/* Installs the bullet-difference Arabic hook. */
 bool InstallEquipDetailsCallbackImplCreateBulletDifferenceTextArabicHook(HMODULE hGame)
 {
     UNREFERENCED_PARAMETER(hGame);
@@ -169,15 +158,13 @@ bool InstallEquipDetailsCallbackImplCreateBulletDifferenceTextArabicHook(HMODULE
         return false;
     }
 
-    gIsArabLanguage = reinterpret_cast<IsArabLanguage_t>(gAddr.IsArabLanguage);
+    gIsArabLanguage = &RL_IsRightToLeft;
     gTarget = reinterpret_cast<void*>(gAddr.EquipDetailsCallbackImpl_CreateBulletDifferenceText);
     if (!gTarget)
         return false;
 
-    if (MH_CreateHook(
-        gTarget,
-        &hkEquipDetailsCallbackImpl_CreateBulletDifferenceText,
-        reinterpret_cast<LPVOID*>(&gOrigCreateBulletDifferenceText)) != MH_OK)
+    if (MH_CreateHook(gTarget, &hkEquipDetailsCallbackImpl_CreateBulletDifferenceText,
+                      reinterpret_cast<LPVOID*>(&gOrigCreateBulletDifferenceText)) != MH_OK)
     {
         Log("[EquipDetailsCallbackImpl::CreateBulletDifferenceText] MH_CreateHook failed.\n");
         return false;
@@ -189,11 +176,10 @@ bool InstallEquipDetailsCallbackImplCreateBulletDifferenceTextArabicHook(HMODULE
         return false;
     }
 
-    Log("[EquipDetailsCallbackImpl::CreateBulletDifferenceText] Arabic hook enabled.\n");
+    Log("[EquipDetailsCallbackImpl::CreateBulletDifferenceText] limit-first hook enabled.\n");
     return true;
 }
 
-/* Removes the bullet-difference Arabic hook. */
 void RemoveEquipDetailsCallbackImplCreateBulletDifferenceTextArabicHook()
 {
     if (gTarget)
@@ -205,6 +191,5 @@ void RemoveEquipDetailsCallbackImplCreateBulletDifferenceTextArabicHook()
 
     gOrigCreateBulletDifferenceText = nullptr;
     gIsArabLanguage = nullptr;
-
-    Log("[EquipDetailsCallbackImpl::CreateBulletDifferenceText] Arabic hook removed.\n");
+    gLogBudget = LOG_BUDGET;
 }

@@ -1,13 +1,15 @@
 #include <windows.h>
 #include <cstdint>
 #include <cstdio>
+#include <cstring>
 #include <string>
 #include "MinHook.h"
 #include "log.h"
 #include "AddressSet.h"
+#include "LanguageProfile.h"
 
 using IsArabLanguage_t = bool(__cdecl*)();
-using SetupListElementWalkerGear_t = void(__fastcall*)(void* thisPtr);
+using SetupListElementWalkerGear_t = bool(__fastcall*)(void* thisPtr);
 using GetCurrentGearSlot_t = uint8_t(__fastcall*)(void* obj);
 
 static IsArabLanguage_t gIsArabLanguage = nullptr;
@@ -125,33 +127,35 @@ static void RewriteWalkerGearLabels(void* thisPtr)
     }
 }
 
-static void __fastcall hkSetupListElementWalkerGear(void* thisPtr)
+static bool __fastcall hkSetupListElementWalkerGear(void* thisPtr)
 {
-    if (!oSetupListElementWalkerGear)
-        return;
+    const bool result = oSetupListElementWalkerGear(thisPtr);
 
-    oSetupListElementWalkerGear(thisPtr);
+    if (IsArabicSafe())
+        RewriteWalkerGearLabels(thisPtr);
 
-    if (!IsArabicSafe())
-        return;
-
-    RewriteWalkerGearLabels(thisPtr);
+    return result;
 }
 
 bool InstallCustomizeSlotSelectorSetupListElementWalkerGearHook(HMODULE hGame)
 {
-    if (!hGame)
+    if (!hGame || !gAddr.IsArabLanguage || !gAddr.SetupListElementWalkerGear)
+    {
+        Log("[CustomizeSlotSelectorCallbackImpl::SetupListElementWalkerGear] Missing address.\n");
         return false;
+    }
 
-    gIsArabLanguage =
-        reinterpret_cast<IsArabLanguage_t>(ToRuntimeVA(hGame, gAddr.IsArabLanguage));
+    gIsArabLanguage = &RL_IsRightToLeft;
 
     gTargetSetupListElementWalkerGear =
         reinterpret_cast<void*>(ToRuntimeVA(hGame, gAddr.SetupListElementWalkerGear));
 
-    if (!gTargetSetupListElementWalkerGear)
+    static const uint8_t kPrologue[] = { 0x48, 0x8B, 0xC4, 0x48, 0x89, 0x58, 0x10, 0x48, 0x89, 0x68, 0x18,
+                                         0x48, 0x89, 0x70, 0x20 };
+    if (memcmp(gTargetSetupListElementWalkerGear, kPrologue, sizeof(kPrologue)) != 0)
     {
-        Log("[CustomizeSlotSelectorCallbackImpl::SetupListElementWalkerGear] Failed to resolve target.\n");
+        Log("[CustomizeSlotSelectorCallbackImpl::SetupListElementWalkerGear] Unexpected code at the target - left alone.\n");
+        gTargetSetupListElementWalkerGear = nullptr;
         return false;
     }
 

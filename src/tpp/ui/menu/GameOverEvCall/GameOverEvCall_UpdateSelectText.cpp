@@ -6,6 +6,7 @@
 #include "MinHook.h"
 #include "log.h"
 #include "AddressSet.h"
+#include "LanguageProfile.h"
 
 namespace
 {
@@ -243,7 +244,7 @@ bool InstallGameOverEvCallUpdateSelectTextArabicLeftToRightAlignHook(HMODULE hGa
         return false;
     }
 
-    gIsArabLanguage = reinterpret_cast<IsArabLanguage_t>(gAddr.IsArabLanguage);
+    gIsArabLanguage = &RL_IsRightToLeft;
     gTarget = reinterpret_cast<void*>(gAddr.GameOverEvCall_UpdateSelectText);
 
     if (!gTarget)

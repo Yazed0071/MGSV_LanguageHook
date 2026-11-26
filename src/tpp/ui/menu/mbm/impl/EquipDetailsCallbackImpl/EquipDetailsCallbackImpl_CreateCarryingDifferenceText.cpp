@@ -6,150 +6,99 @@
 #include "MinHook.h"
 #include "log.h"
 #include "AddressSet.h"
+#include "LanguageProfile.h"
 
 namespace
 {
     using IsArabLanguage_t = bool(__cdecl*)();
-
-    using EquipDetailsCallbackImpl_CreateCarryingDifferenceText_t =
+    using CreateCarryingDifferenceText_t =
         void(__fastcall*)(void* thisPtr, char* outText, uint16_t currentValue, uint16_t baseValue);
 
-    static IsArabLanguage_t gIsArabLanguage = nullptr;
-    static EquipDetailsCallbackImpl_CreateCarryingDifferenceText_t gOrigCreateCarryingDifferenceText = nullptr;
-    static void* gTarget = nullptr;
-}
+    constexpr size_t OUT_TEXT_SIZE = 0x80;
 
-/* Checks Arabic state safely. Takes no parameters. */
-static bool IsArabicSafe()
-{
-    if (!gIsArabLanguage)
-        return false;
+    IsArabLanguage_t gIsArabLanguage = nullptr;
+    CreateCarryingDifferenceText_t gOrigCreateCarryingDifferenceText = nullptr;
+    void* gTarget = nullptr;
 
-    __try
+    bool IsArabicSafe()
     {
-        return gIsArabLanguage();
-    }
-    __except (EXCEPTION_EXECUTE_HANDLER)
-    {
-        return false;
-    }
-}
-
-/* Reads a bounded c-string safely. src = source buffer, maxLen = max bytes, out = destination string. */
-static bool SafeReadCString(const char* src, size_t maxLen, std::string& out)
-{
-    __try
-    {
-        if (!src || maxLen == 0)
+        if (!gIsArabLanguage)
+            return false;
+        __try
         {
-            out.clear();
+            return gIsArabLanguage();
+        }
+        __except (EXCEPTION_EXECUTE_HANDLER)
+        {
             return false;
         }
-
-        size_t len = 0;
-        while (len < maxLen && src[len] != '\0')
-            ++len;
-
-        out.assign(src, len);
-        return true;
     }
-    __except (EXCEPTION_EXECUTE_HANDLER)
-    {
-        out.clear();
-        return false;
-    }
-}
 
-/* Writes a bounded c-string safely. dst = target buffer, dstSize = buffer size, src = source text. */
-static bool SafeWriteCString(char* dst, size_t dstSize, const char* src)
-{
-    __try
+    size_t ReadOutText(const char* src, char* dst, size_t size)
     {
-        if (!dst || dstSize == 0)
-            return false;
-
-        if (!src)
+        __try
         {
-            dst[0] = '\0';
+            const size_t length = strnlen(src, size);
+            if (length == 0 || length >= size)
+                return 0;
+            std::memcpy(dst, src, length + 1);
+            return length;
+        }
+        __except (EXCEPTION_EXECUTE_HANDLER)
+        {
+            return 0;
+        }
+    }
+
+    bool WriteOutText(char* dst, const char* src, size_t length)
+    {
+        __try
+        {
+            std::memcpy(dst, src, length + 1);
             return true;
         }
+        __except (EXCEPTION_EXECUTE_HANDLER)
+        {
+            return false;
+        }
+    }
 
-        _snprintf_s(dst, dstSize, _TRUNCATE, "%s", src);
+    bool DifferenceFirst(const std::string& in, std::string& out)
+    {
+        const size_t open = in.find('(');
+        if (open == std::string::npos || open == 0 || in.back() != ')' || in.size() - open < 2)
+            return false;
+        for (size_t i = 0; i < open; ++i)
+        {
+            if (in[i] < '0' || in[i] > '9')
+                return false;
+        }
+        out = in.substr(open) + " " + in.substr(0, open);
         return true;
     }
-    __except (EXCEPTION_EXECUTE_HANDLER)
+
+    void ApplyDifferenceFirst(char* outText)
     {
-        return false;
+        char local[OUT_TEXT_SIZE] = {};
+        const size_t length = ReadOutText(outText, local, sizeof(local));
+        if (length == 0)
+            return;
+        std::string after;
+        if (!DifferenceFirst(std::string(local, length), after) || after.size() + 1 > OUT_TEXT_SIZE)
+            return;
+        WriteOutText(outText, after.c_str(), after.size());
+    }
+
+    void __fastcall hkEquipDetailsCallbackImpl_CreateCarryingDifferenceText(void* thisPtr, char* outText,
+                                                                            uint16_t currentValue, uint16_t baseValue)
+    {
+        if (gOrigCreateCarryingDifferenceText)
+            gOrigCreateCarryingDifferenceText(thisPtr, outText, currentValue, baseValue);
+        if (outText && IsArabicSafe())
+            ApplyDifferenceFirst(outText);
     }
 }
 
-/* Rewrites "20(<...>)" into "(<...>) 20". src = original built text. */
-static std::string RewriteCarryingDifferenceTextArabic(const std::string& src)
-{
-    if (src.empty())
-        return src;
-
-    const size_t openPos = src.find('(');
-    if (openPos == std::string::npos)
-        return src;
-
-    if (src.back() != ')')
-        return src;
-
-    const std::string numberPart = src.substr(0, openPos);
-    const std::string diffPart = src.substr(openPos);
-
-    if (numberPart.empty() || diffPart.size() < 2)
-        return src;
-
-    for (char c : numberPart)
-    {
-        if (c < '0' || c > '9')
-            return src;
-    }
-
-    return diffPart + numberPart;
-}
-
-/* Applies the Arabic reorder to the already-built output buffer. outText = destination buffer from the game. */
-static void ApplyArabicCarryingDifferenceFix(char* outText)
-{
-    if (!outText)
-        return;
-
-    std::string before;
-    if (!SafeReadCString(outText, 0x80, before))
-        return;
-
-    const std::string after = RewriteCarryingDifferenceTextArabic(before);
-    if (after == before)
-        return;
-
-    if (after.size() > before.size())
-        return;
-
-    if (!SafeWriteCString(outText, before.size() + 1, after.c_str()))
-        return;
-
-}
-
-/* Hook for CreateCarryingDifferenceText(this, outText, currentValue, baseValue). */
-static void __fastcall hkEquipDetailsCallbackImpl_CreateCarryingDifferenceText(
-    void* thisPtr,
-    char* outText,
-    uint16_t currentValue,
-    uint16_t baseValue)
-{
-    if (gOrigCreateCarryingDifferenceText)
-        gOrigCreateCarryingDifferenceText(thisPtr, outText, currentValue, baseValue);
-
-    if (!IsArabicSafe())
-        return;
-
-    ApplyArabicCarryingDifferenceFix(outText);
-}
-
-/* Installs the carrying-difference Arabic hook. hGame = game module handle. */
 bool InstallEquipDetailsCallbackImplCreateCarryingDifferenceTextArabicHook(HMODULE hGame)
 {
     UNREFERENCED_PARAMETER(hGame);
@@ -160,15 +109,13 @@ bool InstallEquipDetailsCallbackImplCreateCarryingDifferenceTextArabicHook(HMODU
         return false;
     }
 
-    gIsArabLanguage = reinterpret_cast<IsArabLanguage_t>(gAddr.IsArabLanguage);
+    gIsArabLanguage = &RL_IsRightToLeft;
     gTarget = reinterpret_cast<void*>(gAddr.EquipDetailsCallbackImpl_CreateCarryingDifferenceText);
     if (!gTarget)
         return false;
 
-    if (MH_CreateHook(
-        gTarget,
-        &hkEquipDetailsCallbackImpl_CreateCarryingDifferenceText,
-        reinterpret_cast<LPVOID*>(&gOrigCreateCarryingDifferenceText)) != MH_OK)
+    if (MH_CreateHook(gTarget, &hkEquipDetailsCallbackImpl_CreateCarryingDifferenceText,
+                      reinterpret_cast<LPVOID*>(&gOrigCreateCarryingDifferenceText)) != MH_OK)
     {
         Log("[EquipDetailsCallbackImpl::CreateCarryingDifferenceText] MH_CreateHook failed.\n");
         return false;
@@ -184,7 +131,6 @@ bool InstallEquipDetailsCallbackImplCreateCarryingDifferenceTextArabicHook(HMODU
     return true;
 }
 
-/* Removes the carrying-difference Arabic hook. */
 void RemoveEquipDetailsCallbackImplCreateCarryingDifferenceTextArabicHook()
 {
     if (gTarget)

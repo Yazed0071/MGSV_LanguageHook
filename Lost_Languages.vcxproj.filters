@@ -80,7 +80,18 @@
     <ClCompile Include="src\tpp\ui\UiCommand\ShowChapterTelop.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\tpp\ui\lang\UnkLoadUIDefaultDataFunc.cpp">
+    <ClCompile Include="src\fox\fs\FileLocationManager\FileLocationManager_LocatePath.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fox\Block\Block_Load.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fox\Lua\LuaCrashReport.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\tpp\ui\menu\impl\MbDvcResourceRecord\MbDvcResourceRecord_LayoutAmountColumn.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>    <ClCompile Include="src\tpp\ui\lang\UnkLoadUIDefaultDataFunc.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\tpp\ui\lang\UnkLoadTppPartsLangFpk.cpp">
@@ -92,6 +103,12 @@
     <ClCompile Include="src\tpp\ui\menu\impl\MenuSystemImpl\GetTipsLangBlockPath.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\fox\gk\subtitles\SubtitlesBinaryCollector_StreamLineLimit.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fox\gk\subtitles\SubtitlesBlockControllerDataBody_KeepAreaSubtitles.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="SetLuaFunctions.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -99,6 +116,128 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\fox\ui\TextAnalysis\CreateTextUnits.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\tpp\ui\utility\GetUTF8TextFromBack.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fox\gr\dg\ArabicGlyphRendering.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fox\ui\ModelNodeText\StoreTextData.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\tpp\ui\impl\EpilogueController\EpilogueController_SetupAsset.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\tpp\ui\hud\impl\RadioButtonGuideImpl\RadioButtonGuideImpl_ArabicMirror.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\tpp\ui\hud\impl\TppUIMusicTelopImpl\TppUIMusicTelopImpl_ArabicRightAlign.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\tpp\ui\menu\MbTitleEv\MbTitleEv_Update.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\tpp\ui\menu\MbCommonPopupAct\MbCommonPopupAct_Update.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\tpp\ui\hud\impl\TppUIResultImpl\TppUIResultImpl_UpdateMissionRadioCommand.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\tpp\ui\menu\impl\MenuTitleCallbackImpl\MenuTitleCallbackImpl_ArabicBreadcrumb.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\tpp\ui\menu\mbm\impl\DataBaseCallbackImpl\DataBaseCallbackImpl_ArabicInfoText.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fox\ui\uix\UixUtility_ArabicRecordRows.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\tpp\ui\menu\mbm\impl\CombatDeployCallbackImpl\CombatDeployCallbackImpl_RefreshMissionTextBox.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\tpp\ui\hud\WorldMarkerEvCall\WorldMarkerLayout_LengthText.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\tpp\ui\hud\impl\ActiveSonarImpl\ActiveSonarImpl_UpdateDistanceText.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\crt\msvcr110_strncpy_s.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\tpp\ui\menu\impl\MbDvcMissionListCallbackImpl\MbDvcMissionListCallbackImpl_ShowSkillView.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\tpp\ui\menu\impl\MbDvcPauseHelpCallbackImpl\MbDvcPauseHelpCallbackImpl_SetupTutorialPopup.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\tpp\ui\menu\impl\MbDvcPauseHelpCallbackImpl\MbDvcPauseHelpCallbackImpl_RefreshHelpPage.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\tpp\ui\menu\impl\MbDvcPauseHelpCallbackImpl\MbDvcPauseHelpCallbackImpl_RefreshHeaderText.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\tpp\ui\utility\UiUtilityImpl_SetPadButtonPrompt.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\tpp\ui\utility\GradeMarkRtl.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fox\impl\StringSystemImpl\StringSystemImpl_snprintf.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fox\ui\Model\Model_DrawInspector.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fox\ui\Model\Model_LayoutMirror.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fox\ui\Model\Model_LayoutDirection.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\tpp\gm\player\SpecialEventAction_AvatarEditCamera.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Diagnostics.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\UnsupportedBuildNotice.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\UnsupportedBuildText.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fox\ui\ActSetText\ActSetText_Update.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fox\ui\ModelNodeText\ModelNodeText_Draw.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fox\ui\ModelNodeText\ModelNodeText_ArabicAudit.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\tpp\mbm\impl\StaffControllerImpl\StaffControllerImpl_GetStaffFullName.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\tpp\net\ServerLanguageFallback.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\tpp\ui\menu\MbDvcCassetteTape\MbDvcCassetteTape_SwapSeekButtons.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\tpp\ui\menu\MbDvcMap\MbDvcMap_MirrorMaskOffset.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>    <ClCompile Include="src\tpp\ui\menu\mbm\impl\SecurityDetailRecord\SecurityDetailRecord_MirrorValueX.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\MinHookBatch.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\LanguageProfile.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\tpp\ui\hud\BinoMic\BinoMic_MirrorGauge.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\tpp\ui\hud\DisplayTimerEvCall\SetDisplayText.cpp">

@@ -22,6 +22,8 @@
 #include "log.h"
 #include "AddressSet.h"
 
+bool FoxAssetExists(uint64_t code);
+
 // ------------------------------------------------------------
 // External helpers
 // ------------------------------------------------------------
@@ -200,6 +202,16 @@ static uint64_t* __fastcall hkGetFtexPathId(
     }
 
     const uint64_t arabicTexture = GetArabicChapterTextureForCode(chapterCode);
+    if (!FoxAssetExists(arabicTexture))
+    {
+        Log("[ChapterTelopInfo::GetFtexPathId] Arabic chapter texture 0x%llX not found - vanilla texture used.\n",
+            static_cast<unsigned long long>(arabicTexture));
+        if (oGetFtexPathId)
+            return oGetFtexPathId(param1, chapterTexture, chapterCode, language);
+
+        return chapterTexture;
+    }
+
     if (!SafeWriteU64(chapterTexture, arabicTexture))
     {
         if (oGetFtexPathId)
